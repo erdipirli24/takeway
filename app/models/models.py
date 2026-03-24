@@ -214,7 +214,7 @@ class Depo(Base):
 
     firma        = relationship("Firma", back_populates="depolar")
     stoklar      = relationship("DepoStok", back_populates="depo", cascade="all,delete")
-    hareketler   = relationship("DepoHareket", back_populates="depo")
+    hareketler   = relationship("DepoHareket", primaryjoin="DepoHareket.depo_id==Depo.id", back_populates="depo")
 
 
 class DepoStok(Base):
@@ -252,7 +252,7 @@ class DepoHareket(Base):
     tarih          = Column(DateTime(timezone=True), server_default=func.now())
     yapan_id       = Column(Integer, ForeignKey("kullanicilar.id"))
 
-    depo           = relationship("Depo", foreign_keys=[depo_id], back_populates="hareketler")
+    depo           = relationship("Depo", primaryjoin="DepoHareket.depo_id==Depo.id", back_populates="hareketler")
     lot            = relationship("HammaddeLot", back_populates="hareketler")
 
 
@@ -587,9 +587,9 @@ class ReceteKalem(Base):
     tolerans_yuzde  = Column(Numeric(5,2), default=5)         # ±% tolerans
     notlar          = Column(String(200))
 
-    recete          = relationship("Recete", foreign_keys=[recete_id], back_populates="kalemler")
+    recete          = relationship("Recete", primaryjoin="ReceteKalem.recete_id==Recete.id", back_populates="kalemler")
     hammadde        = relationship("Hammadde")
-    ara_urun_recete = relationship("Recete", foreign_keys=[ara_urun_recete_id])
+    ara_urun_recete = relationship("Recete", primaryjoin="ReceteKalem.ara_urun_recete_id==Recete.id")
 
 
 # ─── ARA ÜRÜN (KARIşIM) ──────────────────────────────────
@@ -711,7 +711,7 @@ class KaliteKontrol(Base):
     yapan_id     = Column(Integer, ForeignKey("kullanicilar.id"))
     notlar       = Column(Text)
 
-    asama        = relationship("UretimAsama", back_populates="kontroller")
+    asama        = relationship("UretimAsama", primaryjoin="KaliteKontrol.asama_id==UretimAsama.id", back_populates="kontroller")
 
 
 class UretimHammadde(Base):
@@ -741,7 +741,7 @@ class UretimMakineAtama(Base):
     bitis       = Column(DateTime(timezone=True))
     notlar      = Column(Text)
 
-    emir        = relationship("UretimEmri", back_populates="makine_atamalari")
+    emir        = relationship("UretimEmri", primaryjoin="UretimMakineAtama.emir_id==UretimEmri.id", back_populates="makine_atamalari")
     makine      = relationship("Makine", back_populates="uretim_atamalari")
 
 
@@ -1046,7 +1046,7 @@ class SikayetYorum(Base):
     metin        = Column(Text, nullable=False)
     created_at   = Column(DateTime(timezone=True), server_default=func.now())
 
-    sikayet      = relationship("Sikayet", back_populates="yorumlar")
+    sikayet      = relationship("Sikayet", primaryjoin="SikayetYorum.sikayet_id==Sikayet.id", back_populates="yorumlar")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -1129,7 +1129,7 @@ class KalibrasyonKaydi(Base):
     created_by      = Column(Integer, ForeignKey("kullanicilar.id"))
 
     firma           = relationship("Firma")
-    makine          = relationship("Makine")
+    makine          = relationship("Makine", primaryjoin="KalibrasyonKaydi.makine_id==Makine.id")
 
 
 # ─── STOK TAHMİN & ANALİZ ────────────────────────────────
