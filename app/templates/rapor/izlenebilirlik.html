@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}İzlenebilirlik Raporu{% endblock %}
+{% block page_title %}İzlenebilirlik Raporu{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/rapor/">Raporlar</a> / İzlenebilirlik{% endblock %}
+{% block content %}
+<div class="card mb-4">
+  <div class="card-body">
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <form method="GET" action="/rapor/izlenebilirlik" style="display:flex;gap:8px;flex:1">
+        <div style="flex:1"><label class="form-label">Ürün Parti No (parti → hammadde)</label><input type="text" name="parti_no" value="{{ parti_no }}" class="form-control" placeholder="UP-01-U001-240315-0007"></div>
+        <div style="align-self:flex-end"><button type="submit" class="btn-tw">Sorgula</button></div>
+      </form>
+      <form method="GET" action="/rapor/izlenebilirlik" style="display:flex;gap:8px;flex:1">
+        <div style="flex:1"><label class="form-label">Lot / Parti No (lot → ürün)</label><input type="text" name="lot_no" value="{{ lot_no }}" class="form-control" placeholder="TW-01-HM001-24-0001"></div>
+        <div style="align-self:flex-end"><button type="submit" class="btn-tw">Sorgula</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if sonuc %}
+  {% if tip == 'parti' %}
+  <div class="alert-tw alert-success mb-3"><i class="bi bi-check-circle"></i> <strong>{{ sonuc.parti.parti_no }}</strong> için izlenebilirlik zinciri bulundu.</div>
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card mb-3"><div class="card-header" style="color:var(--green)">Ürün Partisi</div><div class="card-body">
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px"><code>{{ sonuc.parti.parti_no }}</code></div>
+        <div style="font-size:13px;color:var(--muted)">{{ sonuc.parti.urun.ad if sonuc.parti.urun else '—' }}</div>
+        <div style="font-size:13px;margin-top:6px">{{ sonuc.parti.uretim_miktari }} {{ sonuc.parti.birim }}</div>
+        {% if sonuc.parti.son_kullanma %}<div style="font-size:12px;color:var(--orange);margin-top:4px">SKT: {{ sonuc.parti.son_kullanma.strftime('%d.%m.%Y') }}</div>{% endif %}
+      </div></div>
+      {% if sonuc.sevk_kalemler %}
+      <div class="card mb-3"><div class="card-header">Sevkiyat Geçmişi</div><div class="card-body p-0">
+        {% for sk in sonuc.sevk_kalemler %}<div style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px"><code>{{ sk.sevkiyat.sevk_no if sk.sevkiyat else '—' }}</code><br><span style="font-size:11.5px;color:var(--muted)">{{ sk.sevkiyat.sevk_tarihi.strftime('%d.%m.%Y') if sk.sevkiyat and sk.sevkiyat.sevk_tarihi else '' }}</span></div>{% endfor %}
+      </div></div>
+      {% endif %}
+      {% if sonuc.sikayetler %}
+      <div class="card"><div class="card-header" style="color:var(--red)">Bağlı Şikayetler</div><div class="card-body p-0">
+        {% for s in sonuc.sikayetler %}<a href="/sikayet/{{ s.id }}" style="display:block;padding:10px 16px;border-bottom:1px solid var(--border)"><code>{{ s.sikayet_no }}</code> — {{ s.baslik[:40] }}</a>{% endfor %}
+      </div></div>
+      {% endif %}
+    </div>
+    <div class="col-lg-8">
+      <div class="card mb-3"><div class="card-header" style="color:var(--blue)">Üretim Emri</div><div class="card-body">
+        {% if sonuc.emir %}<div><strong><a href="/uretim/{{ sonuc.emir.id }}" style="color:var(--blue)">{{ sonuc.emir.emri_no }}</a></strong> — {{ sonuc.emir.urun_adi }}<br><span style="font-size:12px;color:var(--muted)">{{ sonuc.emir.baslangic.strftime('%d.%m.%Y') if sonuc.emir.baslangic else '' }}</span></div>{% endif %}
+      </div></div>
+      <div class="card"><div class="card-header" style="color:var(--purple)">Kullanılan Hammadde Lotları (FIFO İzi)</div><div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">FIFO</th><th>İç Parti No</th><th>Hammadde</th><th>Tedarikçi</th><th>Fatura</th><th>Kullanılan</th></tr></thead>
+          <tbody>
+            {% for k in sonuc.kullanim %}
+            <tr onclick="location.href='/depo/lot/{{ k.lot_id }}'" style="cursor:pointer">
+              <td class="ps-3"><span class="fifo-badge {% if k.fifo_sira==1 %}first{% endif %}">{{ k.fifo_sira or '—' }}</span></td>
+              <td><code style="color:var(--green)">{{ k.lot.ic_parti_no if k.lot else '—' }}</code></td>
+              <td>{{ k.lot.hammadde.ad if k.lot else '—' }}</td>
+              <td style="font-size:12px">{{ k.lot.tedarikci.ad if k.lot and k.lot.tedarikci else '—' }}</td>
+              <td><code style="font-size:11px">{{ k.lot.fatura_no if k.lot else '—' }}</code></td>
+              <td style="font-family:'JetBrains Mono',monospace;color:var(--red)">{{ k.kullanilan }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
+  {% elif tip == 'lot' %}
+  <div class="alert-tw alert-success mb-3"><i class="bi bi-check-circle"></i> <strong>{{ sonuc.lot.ic_parti_no or sonuc.lot.lot_no }}</strong> lotunun ileriye izi bulundu.</div>
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card"><div class="card-header" style="color:var(--blue)">Lot Bilgisi</div><div class="card-body">
+        <div style="font-size:14px;font-weight:700"><code>{{ sonuc.lot.ic_parti_no or sonuc.lot.lot_no }}</code></div>
+        <div style="font-size:13px;margin-top:4px">{{ sonuc.lot.hammadde.ad }}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">Tedarikçi: {{ sonuc.lot.tedarikci.ad if sonuc.lot.tedarikci else '—' }}</div>
+        <div style="font-size:12px;color:var(--muted)">Fatura: {{ sonuc.lot.fatura_no or '—' }}</div>
+      </div></div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card mb-3"><div class="card-header">Bu Lot Hangi Üretimlerde Kullanıldı</div><div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Üretim Emri</th><th>Ürün</th><th>Kullanılan</th></tr></thead>
+          <tbody>
+            {% for k in sonuc.kullanim %}
+            <tr onclick="location.href='/uretim/{{ k.emir_id }}'" style="cursor:pointer">
+              <td class="ps-3"><code>{{ k.emir.emri_no if k.emir else k.emir_id }}</code></td>
+              <td>{{ k.emir.urun_adi if k.emir else '—' }}</td>
+              <td style="font-family:'JetBrains Mono',monospace;color:var(--red)">-{{ k.kullanilan }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div></div>
+      {% if sonuc.partiler %}
+      <div class="card"><div class="card-header" style="color:var(--green)">Üretilen Ürün Partileri (Bu Lottan)</div><div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Parti No</th><th>Ürün</th><th>Miktar</th><th>SKT</th></tr></thead>
+          <tbody>
+            {% for p in sonuc.partiler %}
+            <tr onclick="location.href='/uretim/parti/{{ p.id }}'" style="cursor:pointer">
+              <td class="ps-3"><code style="color:var(--green)">{{ p.parti_no }}</code></td>
+              <td>{{ p.urun.ad if p.urun else '—' }}</td>
+              <td style="font-family:'JetBrains Mono',monospace">{{ p.uretim_miktari }} {{ p.birim }}</td>
+              <td style="font-size:12px">{{ p.son_kullanma.strftime('%d.%m.%Y') if p.son_kullanma else '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div></div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+{% elif parti_no or lot_no %}
+<div class="alert-tw alert-danger"><i class="bi bi-search"></i> Sonuç bulunamadı. Farklı bir numara deneyin.</div>
+{% endif %}
+{% endblock %}

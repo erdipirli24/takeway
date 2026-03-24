@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Lot Etiketi — {{ lot.ic_parti_no or lot.lot_no }}</title>
+  <style>
+    @page { size: 100mm 60mm; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Arial', sans-serif; background: #fff; color: #000; }
+    .etiket {
+      width: 100mm; height: 60mm;
+      border: 1.5px solid #000;
+      padding: 3mm;
+      display: grid;
+      grid-template-columns: 1fr 28mm;
+      gap: 2mm;
+      page-break-after: always;
+    }
+    .sol { display: flex; flex-direction: column; gap: 1.5mm; }
+    .firma { font-size: 7pt; font-weight: bold; color: #333; border-bottom: 0.5px solid #ccc; padding-bottom: 1mm; margin-bottom: 1mm; }
+    .baslik { font-size: 9pt; font-weight: bold; }
+    .satir { display: flex; gap: 2mm; font-size: 7pt; }
+    .label { color: #555; min-width: 20mm; }
+    .val { font-weight: 600; }
+    .parti-no { font-size: 8pt; font-weight: bold; color: #006600; font-family: monospace; background: #f0fff0; padding: 1mm 2mm; border-radius: 1mm; }
+    .sag { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1mm; }
+    .qr-img { width: 24mm; height: 24mm; }
+    .fifo { font-size: 6pt; text-align: center; background: #006600; color: #fff; border-radius: 50%; width: 8mm; height: 8mm; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .alerjen { font-size: 6pt; background: #fff0f0; border: 0.5px solid #cc0000; padding: 0.5mm 1mm; border-radius: 1mm; color: #cc0000; font-weight: bold; }
+    .footer { font-size: 6pt; color: #888; margin-top: auto; }
+    @media screen {
+      body { background: #888; display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 10px; }
+      .etiket { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+      .print-btn { background: #2ea043; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+      .back-btn { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.4); padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+<div class="no-print" style="display:flex;gap:10px;margin-bottom:10px">
+  <button class="print-btn" onclick="window.print()">🖨 Yazdır ({{ adet }} adet)</button>
+  <button class="back-btn" onclick="history.back()">← Geri</button>
+  <span style="color:#fff;font-size:12px;align-self:center">Etiket: {{ lot.hammadde.ad }} — {{ lot.ic_parti_no or lot.lot_no }}</span>
+</div>
+
+{% for i in range(adet) %}
+<div class="etiket">
+  <div class="sol">
+    <div class="firma">TraceWay Gıda İzlenebilirlik Sistemi</div>
+    <div class="baslik">{{ lot.hammadde.ad }}</div>
+    <div class="parti-no">{{ lot.ic_parti_no or lot.lot_no }}</div>
+    <div class="satir"><span class="label">Ted. Lot:</span><span class="val">{{ lot.lot_no }}</span></div>
+    <div class="satir"><span class="label">Miktar:</span><span class="val">{{ lot.giris_miktar }} {{ lot.hammadde.birim }}</span></div>
+    <div class="satir"><span class="label">SKT:</span><span class="val" style="{% if lot.son_kullanma %}color:#cc0000{% endif %}">{{ lot.son_kullanma.strftime('%d.%m.%Y') if lot.son_kullanma else '—' }}</span></div>
+    <div class="satir"><span class="label">Tedarikçi:</span><span class="val">{{ lot.tedarikci.ad[:20] if lot.tedarikci else '—' }}</span></div>
+    <div class="satir"><span class="label">Fatura:</span><span class="val">{{ lot.fatura_no or '—' }}</span></div>
+    <div class="satir"><span class="label">Depo:</span><span class="val">{{ lot.depo.ad[:15] if lot.depo else '—' }}{% if lot.depo_konumu %} / {{ lot.depo_konumu }}{% endif %}</span></div>
+    {% if lot.hammadde.alerjenler %}
+    <div style="margin-top:1mm">{% for a in lot.hammadde.alerjen_listesi %}<span class="alerjen">⚠ {{ a }}</span> {% endfor %}</div>
+    {% endif %}
+    <div class="footer">Giriş: {{ lot.kabul_tarihi.strftime('%d.%m.%Y %H:%M') if lot.kabul_tarihi else '' }} · {{ now.strftime('%d.%m.%Y') }}</div>
+  </div>
+  <div class="sag">
+    {% if lot.qr_data %}
+    <img src="data:image/png;base64,{{ lot.qr_data }}" class="qr-img">
+    {% endif %}
+    {% if lot.fifo_sira %}
+    <div class="fifo">F{{ lot.fifo_sira }}</div>
+    {% endif %}
+    <div style="font-size:6pt;text-align:center;color:#555">{{ lot.durum.value }}</div>
+  </div>
+</div>
+{% endfor %}
+</body>
+</html>

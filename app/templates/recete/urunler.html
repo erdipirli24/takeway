@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Ürün Tanımları{% endblock %}
+{% block page_title %}Ürün Tanımları{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/recete/">Reçeteler</a> / Ürünler{% endblock %}
+{% block topbar_actions %}<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalEkle"><i class="bi bi-plus-lg me-1"></i> Yeni Ürün</button>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><i class="bi bi-box-seam me-2"></i>Ürün Listesi</div>
+  <div class="card-body p-0">
+    {% if urunler %}
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Ad</th><th>Kod</th><th>Barkod</th><th>Birim</th><th>KDV</th><th>Raf Ömrü</th><th>Reçete</th></tr></thead>
+      <tbody>
+        {% for u in urunler %}
+        <tr>
+          <td class="ps-3" style="font-weight:500">{{ u.ad }}</td>
+          <td><code>{{ u.kod or '—' }}</code></td>
+          <td><code style="font-size:11px">{{ u.barkod or '—' }}</code></td>
+          <td>{{ u.birim }}</td>
+          <td>%{{ u.kdv_oran }}</td>
+          <td>{{ u.raf_omru_gun ~ ' gün' if u.raf_omru_gun else '—' }}</td>
+          <td style="font-size:12px;color:var(--blue)">{{ u.receteler|length }} reçete</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)">Ürün eklenmemiş</div>
+    {% endif %}
+  </div>
+</div>
+<div class="modal fade" id="modalEkle" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Ürün</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/recete/urun/ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row g-2">
+        <div class="col-7"><label class="form-label">Ürün Adı *</label><input type="text" name="ad" class="form-control" required></div>
+        <div class="col-5"><label class="form-label">Kod</label><input type="text" name="kod" class="form-control" placeholder="URN-001"></div>
+      </div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Barkod</label><input type="text" name="barkod" class="form-control"></div>
+        <div class="col-3"><label class="form-label">Birim</label>
+          <select name="birim" class="form-select">{% for b in birimler %}<option value="{{ b }}">{{ b }}</option>{% endfor %}</select>
+        </div>
+        <div class="col-3"><label class="form-label">KDV %</label><input type="number" name="kdv_oran" class="form-control" value="10" step="1"></div>
+      </div>
+      <div><label class="form-label">Raf Ömrü (gün)</label><input type="number" name="raf_omru_gun" class="form-control" placeholder="90"></div>
+      <div><label class="form-label">Açıklama</label><textarea name="aciklama" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

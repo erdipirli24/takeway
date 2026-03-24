@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Kullanıcı Yönetimi{% endblock %}
+{% block page_title %}Kullanıcı Yönetimi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Kullanıcılar{% endblock %}
+{% block topbar_actions %}
+<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalEkle"><i class="bi bi-person-plus me-1"></i> Yeni Kullanıcı</button>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><i class="bi bi-people me-2"></i>Personel Listesi</div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Ad Soyad</th><th>Ünvan</th><th>E-posta</th><th>Rol</th><th>Son Giriş</th><th>İşlem</th></tr></thead>
+      <tbody>
+        {% for k in kullanicilar %}
+        <tr>
+          <td class="ps-3"><div style="font-weight:500">{{ k.ad_soyad }}</div></td>
+          <td><span style="font-size:12px;color:var(--muted)">{{ k.unvan or '—' }}</span></td>
+          <td><code style="font-size:11.5px">{{ k.email }}</code></td>
+          <td>{% if k.is_firma_admin %}<span class="badge-tw b-onaylı">Firma Admin</span>{% else %}<span class="badge-tw b-beklemede">Personel</span>{% endif %}</td>
+          <td style="font-size:11.5px;color:var(--muted)">{{ k.last_login.strftime('%d.%m.%Y %H:%M') if k.last_login else '—' }}</td>
+          <td>
+            <a href="/kullanici/{{ k.id }}/yetki" class="btn-blue">Yetkiler</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEkle" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Yeni Kullanıcı</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <form method="POST" action="/kullanici/ekle">
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+        <div><label class="form-label">Ad Soyad *</label><input type="text" name="ad_soyad" class="form-control" required></div>
+        <div><label class="form-label">Ünvan / Görev</label><input type="text" name="unvan" class="form-control" placeholder="Gıda Mühendisi, Depo Sorumlusu..."></div>
+        <div><label class="form-label">E-posta *</label><input type="email" name="email" class="form-control" required></div>
+        <div><label class="form-label">Şifre *</label><input type="password" name="sifre" class="form-control" required></div>
+        <div class="alert-tw alert-info" style="font-size:12px"><i class="bi bi-info-circle"></i> Kullanıcı oluşturulduktan sonra yetki ekranına yönlendirileceksiniz.</div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Oluştur & Yetki Ver</button></div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

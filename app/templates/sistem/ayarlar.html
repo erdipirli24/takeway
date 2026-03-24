@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Sistem Ayarları{% endblock %}
+{% block page_title %}Sistem Ayarları{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Sistem Ayarları{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-sliders me-2"></i>Genel Ayarlar</div>
+      <form method="POST" action="/sistem/ayarlar/kaydet">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+          {% for k, v in ayarlar.items() %}
+          <div>
+            <label class="form-label">{{ v.aciklama }}</label>
+            {% if v.deger in ('true','false') or k in ('fifo_zorunlu','kritik_stok_uyari') %}
+            <select name="{{ k }}" class="form-select">
+              <option value="true" {% if v.deger == 'true' %}selected{% endif %}>Açık</option>
+              <option value="false" {% if v.deger != 'true' %}selected{% endif %}>Kapalı</option>
+            </select>
+            {% else %}
+            <input type="text" name="{{ k }}" class="form-control" value="{{ v.deger }}">
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        <div style="padding:14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end">
+          <button type="submit" class="btn-tw">Ayarları Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-key me-2"></i>API Anahtarları</span>
+        <button class="btn-tw" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalApi">+ Oluştur</button>
+      </div>
+      <div class="card-body p-0">
+        {% if api_anahtarlari %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Ad</th><th>İzin</th><th>Durum</th><th></th></tr></thead>
+          <tbody>
+            {% for a in api_anahtarlari %}
+            <tr>
+              <td class="ps-3">
+                <div style="font-weight:500">{{ a.ad }}</div>
+                {% if a.aktif %}
+                <code style="font-size:10px;color:var(--muted)">{{ a.anahtar[:16] }}...</code>
+                {% endif %}
+              </td>
+              <td><span class="badge-tw b-transfer" style="font-size:10px">{{ a.izinler }}</span></td>
+              <td>{% if a.aktif %}<span class="badge-tw b-onaylı">Aktif</span>{% else %}<span class="badge-tw b-tükendi">İptal</span>{% endif %}</td>
+              <td>
+                {% if a.aktif %}
+                <form method="POST" action="/sistem/api-anahtari/{{ a.id }}/iptal" onsubmit="return confirm('İptal edilsin mi?')">
+                  <button type="submit" class="btn-red" style="padding:3px 8px;font-size:11px">İptal</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:24px;text-align:center;color:var(--muted);font-size:12.5px">API anahtarı oluşturulmamış</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-graph-up me-2" style="color:var(--blue)"></i>Hızlı Erişim</div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+        <a href="/sistem/performans" class="btn-ghost"><i class="bi bi-speedometer2 me-2"></i>Performans Dashboard</a>
+        <a href="/sistem/bildirimler" class="btn-ghost"><i class="bi bi-bell me-2"></i>Bildirim Merkezi</a>
+        <a href="/sistem/denetim-izi" class="btn-ghost"><i class="bi bi-shield-lock me-2"></i>Denetim İzi</a>
+        <a href="/etiket/" class="btn-ghost"><i class="bi bi-tag me-2"></i>Etiket Yönetimi</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-code-slash me-2" style="color:var(--purple)"></i>REST API Kullanımı</div>
+      <div class="card-body" style="font-size:12px">
+        <div style="background:var(--surf2);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7">
+          GET /sistem/api/v1/stok?api_key=XXX<br>
+          GET /sistem/api/v1/izlenebilirlik/{parti_no}?api_key=XXX
+        </div>
+        <div style="margin-top:8px;color:var(--muted)">JSON formatında stok ve izlenebilirlik verisi döner.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalApi" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">API Anahtarı Oluştur</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/sistem/api-anahtari/olustur">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Açıklama *</label><input type="text" name="ad" class="form-control" placeholder="Muhasebe entegrasyonu, Lab sistemi..." required></div>
+      <div><label class="form-label">İzinler</label>
+        <select name="izinler" class="form-select">
+          <option value="read">Sadece Okuma</option>
+          <option value="read,write">Okuma & Yazma</option>
+        </select>
+      </div>
+      <div class="alert-tw alert-info" style="font-size:12px"><i class="bi bi-info-circle"></i> Anahtar oluşturulduktan sonra yalnızca bir kez gösterilir. Güvenli saklayın.</div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Oluştur</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

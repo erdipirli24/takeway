@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Yetki Matrisi · {{ hedef.ad_soyad }}{% endblock %}
+{% block page_title %}Yetki Matrisi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/kullanici/">Kullanıcılar</a> / {{ hedef.ad_soyad }}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-3">
+    <div class="card">
+      <div class="card-body" style="text-align:center;padding:24px">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;margin:0 auto 12px">{{ hedef.ad_soyad[0] }}</div>
+        <div style="font-size:15px;font-weight:600">{{ hedef.ad_soyad }}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">{{ hedef.unvan or 'Personel' }}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">{{ hedef.email }}</div>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header">Şifre Sıfırla</div>
+      <div class="card-body">
+        <form method="POST" action="/kullanici/{{ hedef.id }}/sifre-sifirla">
+          <div style="margin-bottom:8px"><label class="form-label">Yeni Şifre</label><input type="password" name="yeni_sifre" class="form-control" required></div>
+          <button type="submit" class="btn-ghost w-100">Şifreyi Güncelle</button>
+        </form>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-body">
+        <form method="POST" action="/kullanici/{{ hedef.id }}/pasif" onsubmit="return confirm('{{ hedef.ad_soyad }} pasif yapılsın mı?')">
+          <button type="submit" class="btn-red w-100">Kullanıcıyı Pasif Yap</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-9">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-shield-check me-2" style="color:var(--green)"></i>Modül Yetki Matrisi</span>
+        <span style="font-size:11.5px;color:var(--muted)">Görme: okuyabilir · Giriş: veri ekleyip değiştirebilir</span>
+      </div>
+      <form method="POST" action="/kullanici/{{ hedef.id }}/yetki-kaydet">
+        <div style="padding:0">
+          <div class="yetki-row" style="background:var(--surf2);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">
+            <span>Modül</span><span style="text-align:center">Görme</span><span style="text-align:center">Giriş</span>
+          </div>
+          {% for modul in moduller %}
+          {% set y = yetkiler.get(modul) %}
+          <div class="yetki-row">
+            <span style="font-size:13px">{{ MODUL_ETIKETLER[modul] }}</span>
+            <span style="text-align:center">
+              <input type="checkbox" name="gor_{{ modul.value }}" class="check-tw"
+                {% if y and y.gorebilir %}checked{% endif %}>
+            </span>
+            <span style="text-align:center">
+              <input type="checkbox" name="gir_{{ modul.value }}" class="check-tw"
+                {% if y and y.giris_yapabilir %}checked{% endif %}>
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        <div style="padding:14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+          <a href="/kullanici/" class="btn-ghost">İptal</a>
+          <button type="submit" class="btn-tw">Yetkileri Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

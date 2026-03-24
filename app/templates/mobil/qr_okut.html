@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>QR Okut · TraceWay</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{--bg:#0d1117;--surf:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--green:#2ea043;--blue:#58a6ff;--red:#f85149}
+    *{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;min-height:100vh}
+    .topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;gap:12px;align-items:center;position:sticky;top:0}
+    .back{color:var(--muted);font-size:20px;text-decoration:none}
+    h2{font-size:16px;font-weight:700}
+    .content{padding:16px}
+    #video-wrap{width:100%;aspect-ratio:1;border-radius:12px;overflow:hidden;background:#000;position:relative;margin-bottom:16px}
+    #video{width:100%;height:100%;object-fit:cover}
+    #scan-line{position:absolute;top:0;left:0;right:0;height:3px;background:var(--green);animation:scan 2s linear infinite;box-shadow:0 0 10px var(--green)}
+    @keyframes scan{0%{top:0}50%{top:calc(100% - 3px)}100%{top:0}}
+    .btn-scan{width:100%;padding:14px;background:var(--green);border:none;color:#fff;font-size:15px;font-weight:700;border-radius:10px;cursor:pointer;margin-bottom:12px}
+    .divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--muted);font-size:12px}
+    .divider::before,.divider::after{content:'';flex:1;border-top:1px solid var(--border)}
+    .manuel-input{width:100%;background:#0d1117;border:1px solid var(--border);color:var(--text);font-size:14px;padding:12px;border-radius:8px;outline:none;margin-bottom:10px}
+    .btn-sorgula{width:100%;padding:12px;background:rgba(88,166,255,.15);border:1px solid rgba(88,166,255,.3);color:var(--blue);font-size:14px;font-weight:600;border-radius:8px;cursor:pointer}
+    .error{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:var(--red);padding:12px;border-radius:8px;font-size:13px;margin-bottom:16px}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/mobil/" class="back"><i class="bi bi-arrow-left"></i></a>
+  <h2>QR Kod Okut</h2>
+</div>
+<div class="content">
+  {% if hata %}<div class="error"><i class="bi bi-exclamation-triangle me-2"></i>{{ hata }}</div>{% endif %}
+
+  <div id="video-wrap">
+    <video id="video" playsinline autoplay muted></video>
+    <div id="scan-line"></div>
+  </div>
+  <button class="btn-scan" onclick="startCamera()" id="btnKamera">
+    <i class="bi bi-camera"></i> Kamerayı Başlat
+  </button>
+
+  <div class="divider">veya manuel gir</div>
+
+  <form action="/mobil/qr/sorgula" method="GET">
+    <input type="text" name="kod" class="manuel-input" placeholder="İç Parti No, Lot No veya Emir No..." autofocus>
+    <button type="submit" class="btn-sorgula"><i class="bi bi-search me-2"></i>Sorgula</button>
+  </form>
+</div>
+
+<script>
+// jsQR kütüphanesi ile QR okuma
+const script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+document.head.appendChild(script);
+
+let stream = null;
+
+async function startCamera(){
+  const wrap = document.getElementById('video-wrap');
+  const video = document.getElementById('video');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width:{ideal:640}, height:{ideal:640} }
+    });
+    video.srcObject = stream;
+    document.getElementById('btnKamera').style.display = 'none';
+    scanLoop();
+  } catch(e){
+    alert('Kamera açılamadı: ' + e.message);
+  }
+}
+
+function scanLoop(){
+  const video = document.getElementById('video');
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  function tick(){
+    if(video.readyState === video.HAVE_ENOUGH_DATA){
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      if(typeof jsQR !== 'undefined'){
+        const code = jsQR(img.data, img.width, img.height);
+        if(code){
+          // QR okundu — metinden anlamlı kısmı çıkar
+          let raw = code.data;
+          // "İç Parti : TW-01-..." formatından çıkar
+          let match = raw.match(/İç Parti\s*:\s*(\S+)/);
+          if(!match) match = raw.match(/Parti No\s*:\s*(\S+)/);
+          if(!match) match = raw.match(/No:\s*(\S+)/);
+          const kod = match ? match[1] : raw.split('\n')[0];
+          if(stream){ stream.getTracks().forEach(t => t.stop()); }
+          window.location.href = '/mobil/qr/sorgula?kod=' + encodeURIComponent(kod);
+          return;
+        }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+</script>
+</body>
+</html>

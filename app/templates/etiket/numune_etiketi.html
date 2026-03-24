@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"><title>Numune Etiketi — {{ numune.numune_no }}</title>
+  <style>
+    @page { size: 80mm 50mm; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #fff; color: #000; }
+    .etiket { width: 80mm; height: 50mm; border: 2px solid #1a237e; padding: 3mm; display: grid; grid-template-columns: 1fr 22mm; gap: 2mm; page-break-after: always; }
+    .baslik { font-size: 9pt; font-weight: bold; color: #1a237e; border-bottom: 1px solid #1a237e; padding-bottom: 1mm; margin-bottom: 2mm; }
+    .satir { font-size: 7pt; margin-bottom: 1mm; }
+    .label { color: #555; }
+    .val { font-weight: bold; }
+    .numune-no { font-size: 8pt; font-weight: bold; font-family: monospace; color: #1a237e; }
+    .sag { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .qr-img { width: 20mm; height: 20mm; }
+    @media screen { body { background: #888; display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 10px; } .etiket { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.3); } .print-btn { background: #1a237e; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; cursor: pointer; } }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+<div class="no-print" style="margin-bottom:10px">
+  <button class="print-btn" onclick="window.print()">🖨 Yazdır ({{ adet }} adet)</button>
+  <button onclick="history.back()" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);padding:8px 16px;border-radius:6px;cursor:pointer;margin-left:8px">← Geri</button>
+</div>
+{% for i in range(adet) %}
+<div class="etiket">
+  <div>
+    <div class="baslik">NUMUNE — KALİTE KONTROL</div>
+    <div class="numune-no">{{ numune.numune_no }}</div>
+    <div class="satir"><span class="label">Ürün: </span><span class="val">{{ numune.lot.hammadde.ad if numune.lot else '—' }}</span></div>
+    <div class="satir"><span class="label">Lot: </span><span class="val">{{ numune.lot.ic_parti_no or numune.lot.lot_no if numune.lot else '—' }}</span></div>
+    <div class="satir"><span class="label">Miktar: </span><span class="val">{{ numune.miktar }} {{ numune.birim }}</span></div>
+    <div class="satir"><span class="label">Tarih: </span><span class="val">{{ numune.alinma_tarihi.strftime('%d.%m.%Y %H:%M') }}</span></div>
+    <div class="satir"><span class="label">Tip: </span><span class="val">{{ numune.lab_tipi.value }}</span></div>
+  </div>
+  <div class="sag">
+    {% if numune.qr_data %}<img src="data:image/png;base64,{{ numune.qr_data }}" class="qr-img">{% endif %}
+  </div>
+</div>
+{% endfor %}
+</body>
+</html>

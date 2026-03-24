@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+{% block title %}{{ emir.emri_no }}{% endblock %}
+{% block page_title %}{{ emir.emri_no }}{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/uretim/">Üretim</a> / {{ emir.emri_no }}{% endblock %}
+{% block topbar_actions %}
+<a href="/uretim/" class="btn-ghost"><i class="bi bi-arrow-left me-1"></i> Geri</a>
+{% endblock %}
+{% block content %}
+
+{% if hata %}<div class="alert-tw alert-danger mb-3"><i class="bi bi-exclamation-triangle"></i> {{ hata }}</div>{% endif %}
+
+<div class="row g-3">
+
+  <!-- SOL: Özet + Durum + Makineler -->
+  <div class="col-lg-4">
+
+    <!-- Özet -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div><code style="font-size:12px;color:var(--muted)">{{ emir.emri_no }}</code></div>
+          <span class="badge-tw b-{{ emir.durum.value }}" style="font-size:12px">{{ emir.durum.value.upper() }}</span>
+        </div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:12px">{{ emir.urun_adi }}</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Hedef</span><strong style="font-family:'JetBrains Mono',monospace">{{ emir.hedef_miktar }} {{ emir.hedef_birim }}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Üretilen</span><strong style="font-family:'JetBrains Mono',monospace;color:var(--green)">{{ emir.uretilen_miktar or 0 }} {{ emir.hedef_birim }}</strong></div>
+          {% if emir.recete %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Reçete</span><a href="/recete/{{ emir.recete_id }}" style="color:var(--blue)">{{ emir.recete.ad }} v{{ emir.recete.versiyon }}</a></div>{% endif %}
+          {% if emir.baslangic %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Başlangıç</span><span>{{ emir.baslangic.strftime('%d.%m.%Y') }}</span></div>{% endif %}
+        </div>
+        <div class="divider"></div>
+        <form method="POST" action="/uretim/{{ emir.id }}/durum">
+          <label class="form-label">Durum Güncelle</label>
+          <div style="display:flex;gap:8px">
+            <select name="durum" class="form-select">{% for d in UretimDurum %}<option value="{{ d.value }}" {% if d==emir.durum %}selected{% endif %}>{{ d.value }}</option>{% endfor %}</select>
+            <button type="submit" class="btn-tw">↑</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Makineler -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-gear me-2"></i>Atanan Makineler</span>
+        <button class="btn-ghost" style="font-size:11px;padding:3px 8px" data-bs-toggle="modal" data-bs-target="#modalMakine">+ Ata</button>
+      </div>
+      <div class="card-body p-0">
+        {% if atanan_makineler %}
+        {% for a in atanan_makineler %}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)">
+          <div>
+            <span style="font-weight:500">{{ a.makine.ad }}</span>
+            <span class="badge-tw {% if a.makine.durum.value=='aktif' %}b-onaylı{% elif a.makine.durum.value=='arizali' %}b-karantina{% else %}b-beklemede{% endif %}" style="margin-left:6px;font-size:10px">{{ a.makine.durum.value }}</span>
+          </div>
+          <form method="POST" action="/uretim/{{ emir.id }}/makine-kaldir/{{ a.id }}">
+            <button type="submit" class="btn-red" style="padding:3px 8px;font-size:11px">✕</button>
+          </form>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="padding:16px;text-align:center;color:var(--muted);font-size:12.5px">Makine atanmamış</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- QR -->
+    {% if emir.qr_data %}
+    <div class="card">
+      <div class="card-body" style="text-align:center">
+        <div class="qr-box" style="margin-bottom:8px"><img src="data:image/png;base64,{{ emir.qr_data }}" style="width:120px;height:120px;display:block"></div>
+        <div style="font-size:11px;color:var(--muted)">{{ emir.emri_no }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- SAĞ: Reçete, Hammadde, Aşamalar, Parti -->
+  <div class="col-lg-8">
+
+    <!-- Reçete Kalemleri -->
+    {% if recete_kalemleri %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-journal-text me-2" style="color:var(--purple)"></i>Reçete Gereksinimleri ({{ emir.hedef_miktar }} {{ emir.hedef_birim }})</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Hammadde</th><th>Gereken</th><th>Stokta</th><th>Durum</th></tr></thead>
+          <tbody>
+            {% for k in recete_kalemleri %}
+            {% if k.hammadde %}
+            {% set stok_var = aktif_lotlar|selectattr('hammadde_id','eq',k.hammadde_id)|list %}
+            {% set stok_toplam = stok_var|sum(attribute='kalan_miktar') %}
+            {% set gereken = k.miktar * emir.hedef_miktar %}
+            <tr>
+              <td class="ps-3" style="font-weight:500">{{ k.hammadde.ad }}{% if k.hammadde.alerjenler %}{% for a in k.hammadde.alerjen_listesi %}<span class="alerjen-tag">{{ a }}</span>{% endfor %}{% endif %}</td>
+              <td style="font-family:'JetBrains Mono',monospace">{{ "%.3f"|format(gereken) }} {{ k.birim }}</td>
+              <td style="font-family:'JetBrains Mono',monospace;color:{% if stok_toplam >= gereken %}var(--green){% else %}var(--red){% endif %}">{{ "%.3f"|format(stok_toplam) }}</td>
+              <td>{% if stok_toplam >= gereken %}<span class="badge-tw b-onaylı">Yeterli</span>{% else %}<span class="badge-tw b-karantina">Yetersiz</span>{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- FIFO Hammadde Çek -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-layers-half me-2" style="color:var(--blue)"></i>Hammadde Kullanımı (FIFO)</span>
+        <button class="btn-tw" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalFifo">FIFO Çek</button>
+      </div>
+      <div class="card-body p-0">
+        {% if emir.hammadde_kullanim %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">FIFO</th><th>İç Parti</th><th>Hammadde</th><th>Kullanılan</th><th>Tarih</th></tr></thead>
+          <tbody>
+            {% for k in emir.hammadde_kullanim %}
+            <tr onclick="location.href='/depo/lot/{{ k.lot_id }}'" style="cursor:pointer">
+              <td class="ps-3"><span class="fifo-badge {% if k.fifo_sira==1 %}first{% endif %}">{{ k.fifo_sira or '—' }}</span></td>
+              <td><code style="font-size:11px">{{ k.lot.ic_parti_no or k.lot.lot_no if k.lot else '—' }}</code></td>
+              <td>{{ k.lot.hammadde.ad if k.lot else '—' }}</td>
+              <td style="font-family:'JetBrains Mono',monospace;color:var(--red)">-{{ k.kullanilan }}</td>
+              <td style="font-size:11px;color:var(--muted)">{{ k.tarih.strftime('%d.%m.%Y %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:20px;text-align:center;color:var(--muted);font-size:12.5px">Henüz hammadde çekilmedi</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Yarı Mamul Kullan (karışım modu) -->
+    {% if yari_mamuller %}
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-layers me-2" style="color:var(--purple)"></i>Yarı Mamul Kullan</span>
+        <button class="btn-ghost" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalYariMamul">Kullan</button>
+      </div>
+      <div class="card-body p-0">
+        {% if emir.yari_mamul_kaydi %}
+        {% for ym in emir.yari_mamul_kaydi %}
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px">
+          <code>{{ ym.parti_no }}</code> — {{ ym.ad }}
+          {% for ku in ym.kullanim_kayitlari %}{% if ku.uretim_emri_id == emir.id %}<span style="color:var(--red);font-family:'JetBrains Mono',monospace"> -{{ ku.kullanilan }}</span>{% endif %}{% endfor %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="padding:16px;text-align:center;color:var(--muted);font-size:12px">Yarı mamul kullanılmadı</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Aşamalar -->
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-list-check me-2"></i>Üretim Aşamaları</div>
+      <div class="card-body p-0">
+        {% for a in emir.asama_kayitlari %}
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <div style="width:24px;height:24px;border-radius:50%;background:{% if a.tamamlandi %}var(--green){% else %}var(--surf2){% endif %};border:2px solid {% if a.tamamlandi %}var(--green){% else %}var(--border){% endif %};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:{% if a.tamamlandi %}#fff{% else %}var(--muted){% endif %};flex-shrink:0">{{ a.sira }}</div>
+          <div style="flex:1">
+            <div style="font-weight:500;{% if a.tamamlandi %}color:var(--muted);text-decoration:line-through{% endif %}">{{ a.ad }}</div>
+            {% if a.notlar %}<div style="font-size:11.5px;color:var(--muted);margin-top:2px">{{ a.notlar }}</div>{% endif %}
+            {% if a.bitis %}<div style="font-size:11px;color:var(--muted)">{{ a.bitis.strftime('%d.%m.%Y %H:%M') }}</div>{% endif %}
+            <!-- Kalite kontroller -->
+            {% for k in a.kontroller %}
+            <div style="font-size:11.5px;margin-top:4px;display:flex;align-items:center;gap:6px">
+              <span style="color:{% if k.gecti_mi %}var(--green){% elif k.gecti_mi == false %}var(--red){% else %}var(--muted){% endif %}">{% if k.gecti_mi %}✓{% elif k.gecti_mi == false %}✗{% else %}?{% endif %}</span>
+              <span>{{ k.parametre }}{% if k.olculen %}: <strong>{{ k.olculen }} {{ k.birim or '' }}</strong>{% endif %}{% if k.hedef_deger %} <span style="color:var(--muted)">(hedef: {{ k.hedef_deger }})</span>{% endif %}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% if not a.tamamlandi %}
+          <div style="display:flex;gap:6px">
+            <button class="btn-blue" style="font-size:11px;padding:4px 8px" data-bs-toggle="modal" data-bs-target="#modalKontrol{{ a.id }}">
+              <i class="bi bi-clipboard-check"></i>
+            </button>
+            <form method="POST" action="/uretim/{{ emir.id }}/asama/{{ a.id }}/tamamla">
+              <input type="hidden" name="notlar" value="">
+              <button type="submit" class="btn-tw" style="font-size:11px;padding:4px 10px">✓ Tamamla</button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Kalite Kontrol Modal -->
+        <div class="modal fade" id="modalKontrol{{ a.id }}" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+          <div class="modal-header"><h5 class="modal-title">Kalite Kontrol — {{ a.ad }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+          <form method="POST" action="/uretim/{{ emir.id }}/asama/{{ a.id }}/kontrol">
+            <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+              <div><label class="form-label">Parametre *</label><input type="text" name="parametre" class="form-control" placeholder="pH, Ağırlık, Sıcaklık..." required></div>
+              <div class="row g-2">
+                <div class="col-5"><label class="form-label">Hedef Değer</label><input type="text" name="hedef_deger" class="form-control" placeholder="6.5-7.0"></div>
+                <div class="col-4"><label class="form-label">Ölçülen</label><input type="text" name="olculen" class="form-control"></div>
+                <div class="col-3"><label class="form-label">Birim</label><input type="text" name="birim" class="form-control" placeholder="°C"></div>
+              </div>
+              <div><label class="form-label">Sonuç</label>
+                <select name="gecti_mi" class="form-select"><option value="">— Değerlendirme —</option><option value="1">✓ Geçti</option><option value="0">✗ Kaldı</option></select>
+              </div>
+              <div><label class="form-label">Not</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+          </form>
+        </div></div></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Üretilen Partiler -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-box-seam me-2" style="color:var(--green)"></i>Üretilen Ürün Partileri</span>
+        <button class="btn-tw" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalParti">+ Parti Kaydet</button>
+      </div>
+      <div class="card-body p-0">
+        {% if emir.urun_partiler %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Parti No</th><th>Ürün</th><th>Miktar</th><th>SKT</th><th>QR</th></tr></thead>
+          <tbody>
+            {% for p in emir.urun_partiler %}
+            <tr onclick="location.href='/uretim/parti/{{ p.id }}'" style="cursor:pointer">
+              <td class="ps-3"><code style="color:var(--green)">{{ p.parti_no }}</code></td>
+              <td>{{ p.urun.ad if p.urun else '—' }}</td>
+              <td style="font-family:'JetBrains Mono',monospace">{{ p.uretim_miktari }} {{ p.birim }}</td>
+              <td style="font-size:12px">{{ p.son_kullanma.strftime('%d.%m.%Y') if p.son_kullanma else '—' }}</td>
+              <td>
+                {% if p.qr_data %}
+                <button class="btn-blue" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();showQR('{{ p.parti_no }}','{{ p.qr_data }}')">QR</button>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:20px;text-align:center;color:var(--muted);font-size:12.5px">Henüz parti kaydedilmedi</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Yarı Mamul Üret (Karışım Modu) -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-layers me-2" style="color:var(--purple)"></i>Yarı Mamul Üret (Karışım Modu)</span>
+        <button class="btn-ghost" style="font-size:12px;padding:4px 10px;color:var(--purple);border-color:rgba(188,140,255,.3)" data-bs-toggle="modal" data-bs-target="#modalYariUret">+ Yarı Mamul</button>
+      </div>
+      <div class="card-body" style="font-size:12.5px;color:var(--muted)">
+        Hamur, krema, sos gibi ara ürünleri kaydedin. Raf ömrü dolunca otomatik fire olur.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALLER -->
+<div class="modal fade" id="modalMakine" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Makine Ata</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/uretim/{{ emir.id }}/makine-ata">
+    <div class="modal-body">
+      <label class="form-label">Makine Seç</label>
+      <select name="makine_id" class="form-select" required>
+        <option value="">— Seçiniz —</option>
+        {% for m in makineler %}
+        <option value="{{ m.id }}" {% if m.durum.value != 'aktif' %}style="color:var(--muted)"{% endif %}>
+          {{ m.ad }} ({{ m.tip or '' }}) — {{ m.durum.value }}{% if m.durum.value=='arizali' %} ⚠{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Ata</button></div>
+  </form>
+</div></div></div>
+
+<div class="modal fade" id="modalFifo" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">FIFO Hammadde Çek</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/uretim/{{ emir.id }}/fifo-cek">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Hammadde *</label>
+        <select name="hammadde_id" class="form-select" required>
+          <option value="">— Seçiniz —</option>
+          {% for h in hammaddeler %}<option value="{{ h.id }}">{{ h.ad }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="row g-2">
+        <div class="col-8"><label class="form-label">Miktar *</label><input type="number" name="miktar" class="form-control" step="0.001" required></div>
+        <div class="col-4"><label class="form-label">Depo (opsiyonel)</label>
+          <select name="depo_id" class="form-select"><option value="">Tümü</option>{% for d in depolar %}<option value="{{ d.id }}">{{ d.ad }}</option>{% endfor %}</select>
+        </div>
+      </div>
+      <div class="alert-tw alert-info" style="font-size:12px"><i class="bi bi-info-circle"></i> FIFO kuralıyla en eski onaylı lot önce çekilir.</div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Çek</button></div>
+  </form>
+</div></div></div>
+
+<div class="modal fade" id="modalParti" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Ürün Partisi Kaydet</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/uretim/{{ emir.id }}/parti-kaydet">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Ürün *</label>
+        <select name="urun_id" class="form-select" required><option value="">— Seçiniz —</option>{% for u in urunler %}<option value="{{ u.id }}">{{ u.ad }}</option>{% endfor %}</select>
+      </div>
+      <div><label class="form-label">Parti No <small style="color:var(--muted)">(boş = otomatik)</small></label><input type="text" name="parti_no_giris" class="form-control" placeholder="UP-01-U001-240315-0007"></div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Üretilen Miktar *</label><input type="number" name="miktar" class="form-control" step="0.001" required></div>
+        <div class="col-6"><label class="form-label">Birim</label><select name="birim" class="form-select"><option>kg</option><option>adet</option><option>paket</option><option>tepsi</option></select></div>
+      </div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Üretim Tarihi</label><input type="date" name="uretim_tarihi" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Son Kullanma</label><input type="date" name="son_kullanma" class="form-control"></div>
+      </div>
+      <div><label class="form-label">Depo</label><select name="depo_id" class="form-select"><option value="">— Seçiniz —</option>{% for d in depolar %}<option value="{{ d.id }}">{{ d.ad }}</option>{% endfor %}</select></div>
+      <div><label class="form-label">Not</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet & QR Oluştur</button></div>
+  </form>
+</div></div></div>
+
+<div class="modal fade" id="modalYariUret" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yarı Mamul Üret</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/uretim/{{ emir.id }}/yari-uret">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Bağlı Reçete *</label>
+        <select name="recete_id" class="form-select" required><option value="">— Seçiniz —</option>{% for r in (emir.recete.kalemler|map(attribute='ara_urun_recete')|select|list if emir.recete else []) %}<option value="{{ r.id }}">{{ r.ad }}</option>{% endfor %}{% if not emir.recete %}<option value="1">Reçete seçmek için önce emre reçete bağlayın</option>{% endif %}</select>
+      </div>
+      <div><label class="form-label">Ara Ürün Adı *</label><input type="text" name="ad" class="form-control" placeholder="Temel Kurabiye Hamuru" required></div>
+      <div class="row g-2">
+        <div class="col-5"><label class="form-label">Miktar *</label><input type="number" name="miktar" class="form-control" step="0.001" required></div>
+        <div class="col-4"><label class="form-label">Birim</label><select name="birim" class="form-select"><option>kg</option><option>lt</option><option>adet</option></select></div>
+        <div class="col-3"><label class="form-label">Raf Ömrü (gün) *</label><input type="number" name="raf_omru_gun" class="form-control" required min="1" placeholder="2"></div>
+      </div>
+      <div class="alert-tw alert-warn" style="font-size:12px"><i class="bi bi-clock"></i> Raf ömrü dolduğunda kalan miktar otomatik <strong>fire</strong> olur!</div>
+      <div><label class="form-label">Depo</label><select name="depo_id" class="form-select"><option value="">— Seçiniz —</option>{% for d in depolar %}<option value="{{ d.id }}">{{ d.ad }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw" style="background:var(--purple);border-color:var(--purple)">Yarı Mamul Oluştur</button></div>
+  </form>
+</div></div></div>
+
+{% if yari_mamuller %}
+<div class="modal fade" id="modalYariMamul" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yarı Mamul Kullan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/uretim/{{ emir.id }}/yari-mamul-kullan">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Yarı Mamul Seç *</label>
+        <select name="yari_mamul_id" class="form-select" required>
+          <option value="">— Seçiniz —</option>
+          {% for ym in yari_mamuller %}
+          <option value="{{ ym.id }}">{{ ym.ad }} — {{ ym.kalan_miktar }} {{ ym.birim }} (SKT: {{ ym.son_kullanma.strftime('%d.%m %H:%M') if ym.son_kullanma else '?' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div><label class="form-label">Kullanılacak Miktar *</label><input type="number" name="kullanilan" class="form-control" step="0.001" required></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kullan</button></div>
+  </form>
+</div></div></div>
+{% endif %}
+
+<!-- QR Modal -->
+<div class="modal fade" id="modalQR" tabindex="-1"><div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content" style="text-align:center">
+  <div class="modal-header justify-content-between"><h6 class="modal-title" id="qrTitle">QR</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><img id="qrImg" src="" style="width:180px;height:180px;border-radius:8px;border:2px solid var(--border)"></div>
+  <div class="modal-footer justify-content-center"><button class="btn-ghost" onclick="window.print()"><i class="bi bi-printer me-1"></i>Yazdır</button></div>
+</div></div></div>
+<script>
+function showQR(no,b64){document.getElementById('qrTitle').textContent=no;document.getElementById('qrImg').src='data:image/png;base64,'+b64;new bootstrap.Modal(document.getElementById('modalQR')).show();}
+</script>
+{% endblock %}

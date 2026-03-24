@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Hammaddeler{% endblock %}
+{% block page_title %}Hammadde Tanımları{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Hammaddeler{% endblock %}
+{% block topbar_actions %}<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalEkle"><i class="bi bi-plus-lg me-1"></i> Yeni Hammadde</button>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between"><span><i class="bi bi-boxes me-2"></i>Hammadde Listesi</span><span style="font-size:12px;color:var(--muted)">{{ hammaddeler|length }} kayıt</span></div>
+  <div class="card-body p-0">
+    {% if hammaddeler %}
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Ad</th><th>Kod</th><th>Kategori</th><th>Birim</th><th>Mevcut Stok</th><th>Min/Kritik</th><th>Allerjenler</th><th>Numune</th></tr></thead>
+      <tbody>
+        {% for h in hammaddeler %}
+        {% set stok = stoklar.get(h.id, 0) %}
+        <tr onclick="location.href='/depo/stok?hammadde_id={{ h.id }}'" style="cursor:pointer">
+          <td class="ps-3" style="font-weight:500">{{ h.ad }}</td>
+          <td><code>{{ h.kod or '—' }}</code></td>
+          <td>{% if h.kategori %}<span class="badge-tw" style="background:{{ h.kategori.renk }}22;color:{{ h.kategori.renk }}">{{ h.kategori.ad }}</span>{% else %}—{% endif %}</td>
+          <td>{{ h.birim }}</td>
+          <td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:{% if stok <= h.kritik_stok|float %}var(--red){% elif stok <= h.min_stok|float %}var(--orange){% else %}var(--green){% endif %}">
+            {{ stok }} {{ h.birim }}
+            {% if stok <= h.kritik_stok|float %}<span style="font-size:10px;font-weight:400;color:var(--red)"> KRİTİK</span>{% endif %}
+          </td>
+          <td style="font-size:12px;color:var(--muted)">{{ h.min_stok }} / {{ h.kritik_stok }}</td>
+          <td>{% for a in h.alerjen_listesi %}<span class="alerjen-tag">{{ a }}</span>{% endfor %}{% if not h.alerjen_listesi %}<span style="font-size:11px;color:var(--muted)">—</span>{% endif %}</td>
+          <td>{% if h.numune_gerekli %}<span class="badge-tw b-beklemede" style="font-size:10.5px">Gerekli</span>{% else %}<span style="font-size:11px;color:var(--muted)">—</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)"><i class="bi bi-boxes" style="font-size:40px;opacity:.3"></i><div style="margin-top:12px">Hammadde eklenmemiş</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="modalEkle" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Hammadde Tanımla</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/depo/hammadde/ekle">
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">Hammadde Adı *</label><input type="text" name="ad" class="form-control" required></div>
+        <div class="col-md-3"><label class="form-label">Kod</label><input type="text" name="kod" class="form-control" placeholder="UN-001"></div>
+        <div class="col-md-3"><label class="form-label">Birim</label>
+          <select name="birim" class="form-select"><option value="kg">kg</option><option value="g">g</option><option value="lt">lt</option><option value="ml">ml</option><option value="adet">adet</option></select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Kategori</label>
+          <select name="kategori_id" class="form-select"><option value="">— Seçiniz —</option>{% for k in kategoriler %}<option value="{{ k.id }}">{{ k.ad }}</option>{% endfor %}</select>
+        </div>
+        <div class="col-md-3"><label class="form-label">Min. Stok</label><input type="number" name="min_stok" class="form-control" value="0" step="0.001"></div>
+        <div class="col-md-3"><label class="form-label">Kritik Stok</label><input type="number" name="kritik_stok" class="form-control" value="0" step="0.001"></div>
+        <div class="col-12">
+          <label class="form-label">Allerjenler</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;background:var(--surf2);border:1px solid var(--border);border-radius:7px;padding:12px">
+            {% for a in ALERJEN_LISTESI %}
+            <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer">
+              <input type="checkbox" name="alerjen_{{ a }}" class="check-tw"> {{ a }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-12">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+            <input type="checkbox" name="numune_gerekli" class="check-tw" checked>
+            <span>Numune analizi gerekli <small style="color:var(--muted)">(giriş sonrası karantinada bekler)</small></span>
+          </label>
+        </div>
+        <div class="col-12"><label class="form-label">Açıklama</label><textarea name="aciklama" class="form-control" rows="2"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

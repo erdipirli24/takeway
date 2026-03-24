@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Lot {{ lot.ic_parti_no or lot.lot_no }}{% endblock %}
+{% block page_title %}Lot Detayı{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/depo/stok">Stok</a> / {{ lot.ic_parti_no or lot.lot_no }}{% endblock %}
+{% block topbar_actions %}<a href="/depo/stok" class="btn-ghost"><i class="bi bi-arrow-left me-1"></i> Stoka Dön</a>{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body" style="text-align:center;padding:24px">
+        {% if lot.qr_data %}
+        <div class="qr-box" style="margin-bottom:14px"><img src="data:image/png;base64,{{ lot.qr_data }}" style="width:160px;height:160px;display:block"></div>
+        {% endif %}
+        <div style="font-size:13px;font-weight:600">{{ lot.ic_parti_no or lot.lot_no }}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">İç Parti No</div>
+        <span class="badge-tw b-{{ lot.durum.value }}" style="font-size:12px;padding:4px 12px">{{ lot.durum.value.upper() }}</span>
+        {% if fifo_konum %}
+        <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px">
+          <span class="fifo-badge {% if fifo_konum==1 %}first{% endif %}" style="width:28px;height:28px;font-size:13px">{{ fifo_konum }}</span>
+          <span style="font-size:12px;color:var(--muted)">FIFO sırası / {{ fifo_toplam }}</span>
+        </div>
+        {% if fifo_konum == 1 %}<div class="alert-tw alert-info" style="margin-top:10px;font-size:12px"><i class="bi bi-arrow-right-circle"></i> Sıradaki — ilk çekilecek lot</div>{% endif %}
+        {% endif %}
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:center">
+          <button class="btn-ghost" onclick="printQR()" style="font-size:12px"><i class="bi bi-printer me-1"></i> QR Yazdır</button>
+        </div>
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header">Durum Güncelle</div>
+      <div class="card-body">
+        <form method="POST" action="/depo/lot/{{ lot.id }}/durum">
+          <div style="margin-bottom:10px"><label class="form-label">Yeni Durum</label>
+            <select name="durum" class="form-select">
+              {% for d in LotDurum %}<option value="{{ d.value }}" {% if d==lot.durum %}selected{% endif %}>{{ d.value }}</option>{% endfor %}
+            </select>
+          </div>
+          <div style="margin-bottom:10px"><label class="form-label">Kalite Notu</label><textarea name="kalite_notu" class="form-control" rows="2">{{ lot.kalite_notu or '' }}</textarea></div>
+          <button type="submit" class="btn-tw w-100">Güncelle</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-info-circle me-2" style="color:var(--blue)"></i>Lot Bilgileri</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6"><div style="font-size:11px;color:var(--muted)">Hammadde</div><div style="font-weight:600;font-size:15px">{{ lot.hammadde.ad }}</div>
+            {% if lot.hammadde.alerjenler %}{% for a in lot.hammadde.alerjen_listesi %}<span class="alerjen-tag">{{ a }}</span>{% endfor %}{% endif %}
+          </div>
+          <div class="col-md-6"><div style="font-size:11px;color:var(--muted)">Tedarikçi</div><div style="font-weight:500">{{ lot.tedarikci.ad if lot.tedarikci else '—' }}</div></div>
+          <div class="col-md-4"><div style="font-size:11px;color:var(--muted)">Tedarikçi Lot No</div><code>{{ lot.lot_no }}</code></div>
+          <div class="col-md-4"><div style="font-size:11px;color:var(--muted)">Fatura No</div><code>{{ lot.fatura_no or '—' }}</code></div>
+          <div class="col-md-4"><div style="font-size:11px;color:var(--muted)">Sertifika No</div><div>{{ lot.sertifika_no or '—' }}</div></div>
+          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Giriş Miktarı</div><div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ lot.giris_miktar }} <span style="font-size:12px;font-weight:400">{{ lot.birim }}</span></div></div>
+          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Kalan Miktar</div>
+            <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--green)">{{ lot.kalan_miktar }} <span style="font-size:12px;font-weight:400">{{ lot.birim }}</span></div>
+            {% set pct = ((lot.kalan_miktar/lot.giris_miktar)*100)|int if lot.giris_miktar else 0 %}
+            <div class="prog" style="margin-top:4px"><div class="prog-bar {% if pct<20 %}danger{% elif pct<50 %}warn{% endif %}" style="width:{{ pct }}%"></div></div>
+          </div>
+          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Birim Fiyat</div><div>{{ lot.birim_fiyat ~ ' ' ~ lot.para_birimi if lot.birim_fiyat else '—' }}</div></div>
+          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Toplam Değer</div><div style="color:var(--orange)">{{ "%.2f"|format(lot.giris_miktar*lot.birim_fiyat) ~ ' ' ~ lot.para_birimi if lot.birim_fiyat else '—' }}</div></div>
+          <div class="col-12"><div class="divider"></div></div>
+          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Kabul Tarihi (FIFO baz)</div><div style="font-weight:500">{{ lot.kabul_tarihi.strftime('%d.%m.%Y %H:%M') if lot.kabul_tarihi else '—' }}</div></div>
+          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Üretim Tarihi</div><div>{{ lot.uretim_tarihi.strftime('%d.%m.%Y') if lot.uretim_tarihi else '—' }}</div></div>
+          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Son Kullanma (SKT)</div>
+            {% if lot.son_kullanma %}{% set days=(lot.son_kullanma-now).days %}
+            <div style="font-weight:600;color:{% if days<0 %}var(--red){% elif days<30 %}var(--orange){% else %}var(--text){% endif %}">
+              {{ lot.son_kullanma.strftime('%d.%m.%Y') }}{% if days<30 %} <small>({{ days }} gün)</small>{% endif %}
+            </div>{% else %}—{% endif %}
+          </div>
+          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Depo / Konum</div><div>{{ lot.depo.ad if lot.depo else '—' }}</div>{% if lot.depo_konumu %}<div style="font-size:11px;color:var(--muted)">📍 {{ lot.depo_konumu }}</div>{% endif %}</div>
+        </div>
+      </div>
+    </div>
+    {% if numuneler %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-eyedropper me-2" style="color:var(--purple)"></i>Numune Kayıtları</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Numune No</th><th>Tip</th><th>Durum</th><th>Rapor No</th><th>Tarih</th></tr></thead>
+          <tbody>
+            {% for n in numuneler %}
+            <tr>
+              <td class="ps-3"><code>{{ n.numune_no }}</code></td>
+              <td>{{ n.tip.value }}</td>
+              <td><span class="badge-tw b-{{ n.durum.value }}">{{ n.durum.value }}</span></td>
+              <td>{{ n.rapor_no or '—' }}</td>
+              <td style="font-size:11px;color:var(--muted)">{{ n.alinma_tarihi.strftime('%d.%m.%Y') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clock-history me-2" style="color:var(--blue)"></i>Hareket Geçmişi</div>
+      <div class="card-body p-0">
+        {% if hareketler %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Tip</th><th>Miktar</th><th>Önceki</th><th>Sonraki</th><th>Açıklama</th><th>Tarih</th></tr></thead>
+          <tbody>
+            {% for h in hareketler %}
+            <tr>
+              <td class="ps-3"><span class="badge-tw b-{{ h.tip.value }}">{{ h.tip.value }}</span></td>
+              <td style="font-family:'JetBrains Mono',monospace;color:{% if h.tip.value=='giris' %}var(--green){% else %}var(--red){% endif %}">
+                {% if h.tip.value=='giris' %}+{% else %}-{% endif %}{{ h.miktar }}
+              </td>
+              <td style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace">{{ h.onceki_miktar or '—' }}</td>
+              <td style="font-size:12px;font-family:'JetBrains Mono',monospace">{{ h.sonraki_miktar or '—' }}</td>
+              <td style="font-size:12px;color:var(--muted)">{{ h.aciklama or '—' }}</td>
+              <td style="font-size:11px;color:var(--muted);white-space:nowrap">{{ h.tarih.strftime('%d.%m.%Y %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:24px;text-align:center;color:var(--muted)">Hareket kaydı yok</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function printQR(){
+  const img=document.querySelector('.qr-box img');
+  if(!img)return;
+  const w=window.open('','_blank','width=300,height=400');
+  w.document.write('<html><body style="text-align:center;font-family:monospace;padding:20px"><img src="'+img.src+'" style="width:200px;height:200px"><br><b>{{ lot.ic_parti_no or lot.lot_no }}</b><br>{{ lot.hammadde.ad }}<br>SKT: {{ lot.son_kullanma.strftime("%d.%m.%Y") if lot.son_kullanma else "—" }}</body></html>');
+  w.print();
+}
+</script>
+{% endblock %}

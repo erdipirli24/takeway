@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Numune & Lab{% endblock %}
+{% block page_title %}Numune & Lab Yönetimi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Numune & Lab{% endblock %}
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body" style="padding:12px 16px">
+    <form method="GET" class="d-flex gap-2">
+      <select name="durum" class="form-select" style="max-width:160px">
+        <option value="">Tüm Durumlar</option>
+        {% for d in NumuneDurum %}<option value="{{ d.value }}" {% if filtre_durum==d.value %}selected{% endif %}>{{ d.value }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn-ghost"><i class="bi bi-funnel"></i></button>
+      <a href="/depo/numune" class="btn-ghost">Temizle</a>
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header"><i class="bi bi-eyedropper me-2" style="color:var(--purple)"></i>Numune Listesi</div>
+  <div class="card-body p-0">
+    {% if numuneler %}
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Numune No</th><th>Hammadde / Lot</th><th>Tip</th><th>Lab</th><th>Durum</th><th>Alınma</th><th>Rapor No</th><th>İşlem</th></tr></thead>
+      <tbody>
+        {% for n in numuneler %}
+        <tr>
+          <td class="ps-3"><code>{{ n.numune_no }}</code>
+            {% if n.qr_data %}<button class="btn-blue" style="padding:2px 6px;font-size:10px;margin-left:4px" onclick="showQR('{{ n.numune_no }}','{{ n.qr_data }}')">QR</button>{% endif %}
+          </td>
+          <td>{{ n.lot.hammadde.ad if n.lot else '—' }}<br><code style="font-size:10.5px">{{ n.lot.ic_parti_no or n.lot.lot_no if n.lot else '' }}</code></td>
+          <td><span class="badge-tw b-beklemede">{{ n.tip.value }}</span></td>
+          <td style="font-size:12px">{{ n.lab_tipi.value }}</td>
+          <td><span class="badge-tw b-{{ n.durum.value }}">{{ n.durum.value }}</span></td>
+          <td style="font-size:11px;color:var(--muted)">{{ n.alinma_tarihi.strftime('%d.%m.%Y') }}</td>
+          <td><code style="font-size:11px">{{ n.rapor_no or '—' }}</code></td>
+          <td>
+            {% if n.durum.value == 'beklemede' %}
+            <button class="btn-tw" style="font-size:11px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalOnayla{{ n.id }}">Sonuç Gir</button>
+            <div class="modal fade" id="modalOnayla{{ n.id }}" tabindex="-1">
+              <div class="modal-dialog"><div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Numune Sonucu — {{ n.numune_no }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <form method="POST" action="/depo/numune/{{ n.id }}/onayla">
+                  <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+                    <div><label class="form-label">Rapor No *</label><input type="text" name="rapor_no" class="form-control" required placeholder="LAB-2024-001"></div>
+                    <div><label class="form-label">Sonuç Notu</label><textarea name="sonuc_notu" class="form-control" rows="2" placeholder="Analiz notları..."></textarea></div>
+                    <div><label class="form-label">Karar *</label>
+                      <select name="karar" class="form-select">
+                        <option value="onaylı">✓ Onaylandı — Kullanıma Açıldı</option>
+                        <option value="red">✗ Reddedildi — Karantinaya Alındı</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+                </form>
+              </div></div>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)"><i class="bi bi-eyedropper" style="font-size:40px;opacity:.3"></i><div style="margin-top:12px">Numune kaydı bulunamadı</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="modalQR" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content" style="text-align:center">
+    <div class="modal-header justify-content-between"><h6 class="modal-title" id="qrTitle">QR</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><img id="qrImg" src="" style="width:180px;height:180px;border-radius:8px;border:2px solid var(--border)"></div>
+    <div class="modal-footer justify-content-center"><button class="btn-ghost" onclick="window.print()"><i class="bi bi-printer me-1"></i>Yazdır</button></div>
+  </div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function showQR(no, b64){ document.getElementById('qrTitle').textContent=no; document.getElementById('qrImg').src='data:image/png;base64,'+b64; new bootstrap.Modal(document.getElementById('modalQR')).show(); }
+</script>
+{% endblock %}

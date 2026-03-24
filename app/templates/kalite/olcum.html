@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}CCP Ölçümleri{% endblock %}
+{% block page_title %}CCP Ölçüm Kayıtları{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/kalite/">Kalite</a> / Ölçümler{% endblock %}
+{% block topbar_actions %}<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalOlcum">+ Ölçüm Gir</button>{% endblock %}
+{% block content %}
+<div class="card mb-3"><div class="card-body" style="padding:12px 16px">
+  <form method="GET" class="d-flex gap-2">
+    <select name="durum" class="form-select" style="max-width:160px"><option value="">Tüm Durumlar</option>{% for d in CCPDurum %}<option value="{{ d.value }}" {% if filtre_durum==d.value %}selected{% endif %}>{{ d.value }}</option>{% endfor %}</select>
+    <button type="submit" class="btn-ghost"><i class="bi bi-funnel"></i></button>
+  </form>
+</div></div>
+<div class="card">
+  <div class="card-header"><i class="bi bi-clipboard-data me-2"></i>Ölçüm Listesi</div>
+  <div class="card-body p-0">
+    {% if olcumler %}
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">CCP Noktası</th><th>Ölçülen</th><th>Durum</th><th>Üretim</th><th>Düzeltici</th><th>Tarih</th></tr></thead>
+      <tbody>
+        {% for o in olcumler %}
+        <tr>
+          <td class="ps-3" style="font-weight:500">{{ o.ccp_tanim.ad if o.ccp_tanim else '—' }}<br><span style="font-size:11px;color:var(--muted)">{{ o.ccp_tanim.kategori.value if o.ccp_tanim else '' }}</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:{% if o.durum.value=='uygun' %}var(--green){% elif o.durum.value=='kritik' %}var(--red){% else %}var(--orange){% endif %}">{{ o.olculen_deger }} {{ o.birim or '' }}</td>
+          <td><span class="badge-tw {% if o.durum.value=='uygun' %}b-onaylı{% elif o.durum.value=='kritik' %}b-karantina{% else %}b-beklemede{% endif %}">{{ o.durum.value }}</span></td>
+          <td style="font-size:12px"><code>{{ o.uretim_emri.emri_no if o.uretim_emri else '—' }}</code></td>
+          <td>{% if o.durum.value != 'uygun' %}{% if o.duzeltici_yapildi %}<span style="color:var(--green)">✓ Yapıldı</span>{% else %}<span style="color:var(--red)">✗ Bekleniyor</span>{% endif %}{% endif %}</td>
+          <td style="font-size:11px;color:var(--muted)">{{ o.olcum_tarihi.strftime('%d.%m.%Y %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)">Ölçüm kaydı yok</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="modalOlcum" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni CCP Ölçümü</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/kalite/ccp/olcum/ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">CCP Noktası *</label>
+        <select name="ccp_tanim_id" class="form-select" required><option value="">— Seçiniz —</option>{% for c in ccp_tanimlar %}<option value="{{ c.id }}">{{ c.ad }} ({{ c.birim or '' }}{% if c.kritik_limit_min %}, min:{{ c.kritik_limit_min }}{% endif %}{% if c.kritik_limit_max %}, max:{{ c.kritik_limit_max }}{% endif %})</option>{% endfor %}</select>
+      </div>
+      <div class="row g-2">
+        <div class="col-7"><label class="form-label">Ölçülen Değer *</label><input type="number" name="olculen_deger" class="form-control" step="0.01" required></div>
+        <div class="col-5"><label class="form-label">Birim</label><input type="text" name="birim" class="form-control" placeholder="°C"></div>
+      </div>
+      <div><label class="form-label">Bağlı Üretim Emri</label>
+        <select name="uretim_emri_id" class="form-select"><option value="">— Opsiyonel —</option>{% for e in uretim_emirleri %}<option value="{{ e.id }}">{{ e.emri_no }} — {{ e.urun_adi }}</option>{% endfor %}</select>
+      </div>
+      <div><label class="form-label">Sapma Açıklaması (varsa)</label><textarea name="sapma_aciklama" class="form-control" rows="2"></textarea></div>
+      <div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" name="duzeltici_yapildi" class="check-tw"> Düzeltici eylem uygulandı</label></div>
+      <div><label class="form-label">Düzeltici Not</label><textarea name="duzeltici_not" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

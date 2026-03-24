@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Parti {{ parti.parti_no }}{% endblock %}
+{% block page_title %}Ürün Partisi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/uretim/">Üretim</a> / <a href="/uretim/{{ emir.id }}">{{ emir.emri_no }}</a> / {{ parti.parti_no }}{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body" style="text-align:center;padding:24px">
+        {% if parti.qr_data %}
+        <div class="qr-box" style="margin-bottom:14px"><img src="data:image/png;base64,{{ parti.qr_data }}" style="width:160px;height:160px;display:block"></div>
+        {% endif %}
+        <div style="font-size:14px;font-weight:700;color:var(--green)">{{ parti.parti_no }}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">{{ parti.urun.ad if parti.urun else '—' }}</div>
+        <div style="margin-top:12px;font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ parti.uretim_miktari }} {{ parti.birim }}</div>
+        {% if parti.son_kullanma %}
+        <div style="margin-top:8px;font-size:13px;font-weight:600;color:var(--orange)">SKT: {{ parti.son_kullanma.strftime('%d.%m.%Y') }}</div>
+        {% endif %}
+        <button class="btn-ghost" style="margin-top:14px;font-size:12px" onclick="printQR()"><i class="bi bi-printer me-1"></i> Etiket Yazdır</button>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-diagram-3 me-2" style="color:var(--purple)"></i>İzlenebilirlik Zinciri</div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <!-- Parti -->
+          <div style="background:rgba(46,160,67,.08);border:1px solid rgba(46,160,67,.3);border-radius:8px;padding:12px 16px">
+            <div style="font-size:10.5px;color:var(--green);font-weight:600;margin-bottom:4px">ÜRÜN PARTİSİ</div>
+            <div style="font-weight:600"><code>{{ parti.parti_no }}</code> — {{ parti.urun.ad if parti.urun else '—' }}</div>
+            <div style="font-size:12px;color:var(--muted)">{{ parti.uretim_miktari }} {{ parti.birim }} · {{ parti.uretim_tarihi.strftime('%d.%m.%Y') if parti.uretim_tarihi else '—' }}</div>
+          </div>
+          <div style="text-align:center;color:var(--muted)">↑</div>
+          <!-- Üretim Emri -->
+          <div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);border-radius:8px;padding:12px 16px">
+            <div style="font-size:10.5px;color:var(--blue);font-weight:600;margin-bottom:4px">ÜRETİM EMRİ</div>
+            <a href="/uretim/{{ emir.id }}" style="font-weight:600;color:var(--text)"><code>{{ emir.emri_no }}</code></a>
+            {% if makineler %}
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">
+              Makineler: {% for m in makineler %}{{ m.makine.ad }}{% if not loop.last %}, {% endif %}{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div style="text-align:center;color:var(--muted)">↑</div>
+          <!-- Yarı Mamuller -->
+          {% if ym_kullanim %}
+          <div style="background:rgba(188,140,255,.08);border:1px solid rgba(188,140,255,.3);border-radius:8px;padding:12px 16px">
+            <div style="font-size:10.5px;color:var(--purple);font-weight:600;margin-bottom:6px">YARI MAMULLER</div>
+            {% for ku in ym_kullanim %}
+            <div style="font-size:13px;margin-bottom:4px"><code>{{ ku.yari_mamul.parti_no }}</code> — {{ ku.yari_mamul.ad }} <span style="color:var(--red)">-{{ ku.kullanilan }}</span></div>
+            {% endfor %}
+          </div>
+          <div style="text-align:center;color:var(--muted)">↑</div>
+          {% endif %}
+          <!-- Hammaddeler -->
+          <div style="background:rgba(88,166,255,.06);border:1px solid var(--border);border-radius:8px;padding:12px 16px">
+            <div style="font-size:10.5px;color:var(--muted);font-weight:600;margin-bottom:6px">HAMMADDEler (FIFO İZİ)</div>
+            {% if kullanim %}
+            {% for k in kullanim %}
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span class="fifo-badge {% if k.fifo_sira==1 %}first{% endif %}" style="flex-shrink:0">{{ k.fifo_sira or '—' }}</span>
+              <div>
+                <div style="font-size:13px"><a href="/depo/lot/{{ k.lot_id }}" style="color:var(--blue)"><code>{{ k.lot.ic_parti_no or k.lot.lot_no if k.lot else k.lot_id }}</code></a>
+                <span style="font-size:12px;color:var(--muted);margin-left:6px">{{ k.lot.hammadde.ad if k.lot else '' }}</span></div>
+                <div style="font-size:11px;color:var(--muted)">
+                  Tedarikçi: {{ k.lot.tedarikci.ad if k.lot and k.lot.tedarikci else '—' }} · 
+                  Fatura: {{ k.lot.fatura_no or '—' }} ·
+                  <span style="color:var(--red)">-{{ k.kullanilan }} {{ k.lot.birim if k.lot else '' }}</span>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="font-size:12.5px;color:var(--muted)">Hammadde kaydı yok</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function printQR(){
+  const img=document.querySelector('.qr-box img');
+  if(!img)return;
+  const w=window.open('','_blank','width=320,height=440');
+  w.document.write('<html><body style="text-align:center;font-family:monospace;padding:20px"><img src="'+img.src+'" style="width:200px;height:200px"><br><b>{{ parti.parti_no }}</b><br>{{ parti.urun.ad if parti.urun else "" }}<br>{{ parti.uretim_miktari }} {{ parti.birim }}<br>SKT: {{ parti.son_kullanma.strftime("%d.%m.%Y") if parti.son_kullanma else "—" }}</body></html>');
+  w.print();
+}
+</script>
+{% endblock %}

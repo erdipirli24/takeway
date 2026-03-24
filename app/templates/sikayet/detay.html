@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ sikayet.sikayet_no }}{% endblock %}
+{% block page_title %}Şikayet Detayı{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/sikayet/">Şikayetler</a> / {{ sikayet.sikayet_no }}{% endblock %}
+{% block content %}
+{% if sikayet.is_recall and sikayet.durum.value == 'recall' %}
+<div class="alert-tw alert-danger mb-3" style="font-size:14px;font-weight:600"><i class="bi bi-exclamation-octagon-fill" style="font-size:18px"></i> AKTİF RECALL!{% if sikayet.etkilenen_miktar %} Etkilenen: {{ sikayet.etkilenen_miktar }} · Geri çağrılan: {{ sikayet.geri_cagrilan or 0 }}{% endif %}</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3"><div class="card-body">
+      <code style="font-size:12px;color:var(--muted)">{{ sikayet.sikayet_no }}</code>{% if sikayet.is_recall %}<span class="badge-tw b-recall" style="margin-left:6px">RECALL</span>{% endif %}
+      <div style="font-size:16px;font-weight:600;margin:8px 0">{{ sikayet.baslik }}</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <span class="badge-tw b-{{ sikayet.durum.value }}">{{ sikayet.durum.value }}</span>
+        <span class="badge-tw b-{{ sikayet.oncelik.value }}">{{ sikayet.oncelik.value }}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px">
+        {% if sikayet.musteri %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Müşteri</span><span>{{ sikayet.musteri.ad }}</span></div>{% endif %}
+        {% if sikayet.urun_parti %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Parti</span><a href="/uretim/parti/{{ sikayet.urun_parti_id }}" style="color:var(--green)"><code>{{ sikayet.urun_parti.parti_no }}</code></a></div>{% endif %}
+        {% if sikayet.etkilenen_miktar %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Etkilenen</span><span style="color:var(--red);font-weight:600">{{ sikayet.etkilenen_miktar }}</span></div>{% endif %}
+        {% if sikayet.is_recall %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Geri Çağrılan</span><span style="color:var(--green);font-weight:600">{{ sikayet.geri_cagrilan or 0 }}</span></div>{% endif %}
+      </div>
+      <div class="divider"></div>
+      <form method="POST" action="/sikayet/{{ sikayet.id }}/guncelle">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div><label class="form-label">Durum</label><select name="durum" class="form-select">{% for d in SikayetDurum %}<option value="{{ d.value }}" {% if d==sikayet.durum %}selected{% endif %}>{{ d.value }}</option>{% endfor %}</select></div>
+          {% if sikayet.is_recall %}<div><label class="form-label">Geri Çağrılan</label><input type="number" name="geri_cagrilan" class="form-control" step="0.001" value="{{ sikayet.geri_cagrilan or '' }}"></div>{% endif %}
+          <div><label class="form-label">Kök Neden</label><textarea name="kok_neden" class="form-control" rows="2">{{ sikayet.kok_neden or '' }}</textarea></div>
+          <div><label class="form-label">Düzeltici Eylem</label><textarea name="duzeltici_eylem" class="form-control" rows="2">{{ sikayet.duzeltici_eylem or '' }}</textarea></div>
+          <button type="submit" class="btn-tw">Güncelle</button>
+        </div>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-3"><div class="card-header"><i class="bi bi-file-text me-2"></i>Açıklama</div><div class="card-body">
+      <div style="background:var(--surf2);border:1px solid var(--border);border-radius:7px;padding:14px;font-size:13.5px;line-height:1.6;white-space:pre-wrap">{{ sikayet.aciklama }}</div>
+      {% if sikayet.kok_neden or sikayet.duzeltici_eylem %}
+      <div class="row g-3 mt-1">
+        {% if sikayet.kok_neden %}<div class="col-md-6"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px">KÖK NEDEN</div><div style="background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.2);border-radius:6px;padding:10px;font-size:13px">{{ sikayet.kok_neden }}</div></div>{% endif %}
+        {% if sikayet.duzeltici_eylem %}<div class="col-md-6"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px">DÜZELTİCİ EYLEM</div><div style="background:rgba(46,160,67,.07);border:1px solid rgba(46,160,67,.2);border-radius:6px;padding:10px;font-size:13px">{{ sikayet.duzeltici_eylem }}</div></div>{% endif %}
+      </div>
+      {% endif %}
+    </div></div>
+    {% if iz_lotlar %}
+    <div class="card mb-3"><div class="card-header" style="color:var(--purple)"><i class="bi bi-diagram-3 me-2"></i>Geriye İz — Hammadde Lotları</div><div class="card-body p-0">
+      <table class="table mb-0">
+        <thead><tr><th class="ps-3">FIFO</th><th>İç Parti</th><th>Hammadde</th><th>Tedarikçi</th><th>Kullanılan</th></tr></thead>
+        <tbody>
+          {% for k in iz_lotlar %}
+          <tr onclick="location.href='/depo/lot/{{ k.lot_id }}'" style="cursor:pointer">
+            <td class="ps-3"><span class="fifo-badge {% if k.fifo_sira==1 %}first{% endif %}">{{ k.fifo_sira or '—' }}</span></td>
+            <td><code style="color:var(--green)">{{ k.lot.ic_parti_no if k.lot else '—' }}</code></td>
+            <td>{{ k.lot.hammadde.ad if k.lot else '—' }}</td>
+            <td style="font-size:12px">{{ k.lot.tedarikci.ad if k.lot and k.lot.tedarikci else '—' }}</td>
+            <td style="color:var(--red);font-family:'JetBrains Mono',monospace">{{ k.kullanilan }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+    {% endif %}
+    <div class="card"><div class="card-header"><i class="bi bi-chat-left-text me-2"></i>Yorumlar</div><div class="card-body">
+      {% for y in sikayet.yorumlar %}
+      <div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600;color:var(--blue)">#{{ y.kullanici_id }}</span><span style="font-size:11px;color:var(--muted)">{{ y.created_at.strftime('%d.%m.%Y %H:%M') }}</span></div>
+        <div style="font-size:13px;line-height:1.5">{{ y.metin }}</div>
+      </div>
+      {% else %}
+      <div style="text-align:center;color:var(--muted);padding:16px;font-size:13px;margin-bottom:14px">Yorum yok</div>
+      {% endfor %}
+      <form method="POST" action="/sikayet/{{ sikayet.id }}/yorum">
+        <textarea name="metin" class="form-control" rows="3" placeholder="Takip notu..." required style="margin-bottom:8px"></textarea>
+        <button type="submit" class="btn-tw">Yorum Ekle</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

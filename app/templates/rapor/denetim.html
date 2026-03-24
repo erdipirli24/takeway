@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Denetim Paketi{% endblock %}
+{% block page_title %}Denetim Paketi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/rapor/">Raporlar</a> / Denetim{% endblock %}
+{% block content %}
+<div class="card mb-3"><div class="card-body" style="padding:12px 16px">
+  <form method="GET" class="d-flex gap-2 align-items-end">
+    <div><label class="form-label">Başlangıç</label><input type="date" name="baslangic" value="{{ baslangic_input }}" class="form-control"></div>
+    <div><label class="form-label">Bitiş</label><input type="date" name="bitis" value="{{ bitis_input }}" class="form-control"></div>
+    <button type="submit" class="btn-tw">Güncelle</button>
+    <button type="button" class="btn-ghost" onclick="window.print()"><i class="bi bi-printer me-1"></i> Yazdır</button>
+  </form>
+</div></div>
+
+<div style="background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+    <div>
+      <div style="font-size:20px;font-weight:700">İzlenebilirlik & HACCP Denetim Raporu</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">{{ firma.ad if firma else '' }} · {{ baslangic }} – {{ bitis }}</div>
+    </div>
+    <div style="text-align:right;font-size:12px;color:var(--muted)">
+      Oluşturulma: {{ now.strftime('%d.%m.%Y %H:%M') }}<br>
+      TraceWay v2.0
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2"><div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--blue)">{{ lot_giris }}</div><div style="font-size:11px;color:var(--muted)">Lot Girişi</div></div></div>
+    <div class="col-6 col-lg-2"><div style="background:rgba(46,160,67,.08);border:1px solid rgba(46,160,67,.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--green)">{{ uretim_tamamlanan }}</div><div style="font-size:11px;color:var(--muted)">Üretim</div></div></div>
+    <div class="col-6 col-lg-2"><div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--blue)">{{ sevkiyat_sayisi }}</div><div style="font-size:11px;color:var(--muted)">Sevkiyat</div></div></div>
+    <div class="col-6 col-lg-2"><div style="background:rgba(46,160,67,.08);border:1px solid rgba(46,160,67,.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--green)">%{{ ccp_oran }}</div><div style="font-size:11px;color:var(--muted)">HACCP Uyum</div></div></div>
+    <div class="col-6 col-lg-2"><div style="background:rgba({% if aktif_recall %}248,81,73{% else %}46,160,67{% endif %},.08);border:1px solid rgba({% if aktif_recall %}248,81,73{% else %}46,160,67{% endif %},.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:{% if aktif_recall %}var(--red){% else %}var(--green){% endif %}">{{ aktif_recall|length }}</div><div style="font-size:11px;color:var(--muted)">Aktif Recall</div></div></div>
+  </div>
+
+  {% if aktif_recall %}
+  <div class="alert-tw alert-danger mb-4"><i class="bi bi-exclamation-octagon-fill"></i> <strong>{{ aktif_recall|length }} aktif recall var!</strong></div>
+  {% else %}
+  <div class="alert-tw alert-success mb-4"><i class="bi bi-check-circle"></i> Bu dönemde aktif recall kaydı bulunmamaktadır.</div>
+  {% endif %}
+
+  <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--muted)">SON HAMMADDe GİRİŞLERİ</div>
+  <table class="table mb-0">
+    <thead><tr><th>İç Parti No</th><th>Hammadde</th><th>Tedarikçi</th><th>Fatura No</th><th>Miktar</th><th>Durum</th><th>Kabul</th></tr></thead>
+    <tbody>
+      {% for lot in son_lotlar %}
+      <tr>
+        <td><code style="font-size:11px">{{ lot.ic_parti_no or lot.lot_no }}</code></td>
+        <td>{{ lot.hammadde.ad }}</td>
+        <td style="font-size:12px">{{ lot.tedarikci.ad if lot.tedarikci else '—' }}</td>
+        <td><code style="font-size:11px">{{ lot.fatura_no or '—' }}</code></td>
+        <td style="font-family:'JetBrains Mono',monospace">{{ lot.giris_miktar }} {{ lot.birim }}</td>
+        <td><span class="badge-tw b-{{ lot.durum.value }}">{{ lot.durum.value }}</span></td>
+        <td style="font-size:11px;color:var(--muted)">{{ lot.kabul_tarihi.strftime('%d.%m.%Y') if lot.kabul_tarihi else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

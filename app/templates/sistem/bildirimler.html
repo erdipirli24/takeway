@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Bildirimler{% endblock %}
+{% block page_title %}Bildirim Merkezi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Bildirimler{% endblock %}
+{% block topbar_actions %}
+{% if okunmamis > 0 %}
+<form method="POST" action="/sistem/bildirimler/tumu-oku">
+  <button type="submit" class="btn-ghost"><i class="bi bi-check-all me-1"></i> Tümünü Okundu Say</button>
+</form>
+{% endif %}
+{% endblock %}
+{% block content %}
+{% if okunmamis > 0 %}
+<div class="alert-tw alert-warn mb-3"><i class="bi bi-bell"></i> <strong>{{ okunmamis }} okunmamış</strong> bildirim var.</div>
+{% endif %}
+<div class="card">
+  <div class="card-header"><i class="bi bi-bell me-2"></i>Tüm Bildirimler</div>
+  <div class="card-body p-0">
+    {% if bildirimler %}
+    {% for b in bildirimler %}
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;background:{% if not b.okundu %}rgba(88,166,255,.04){% else %}transparent{% endif %}">
+      <div style="width:8px;height:8px;border-radius:50%;background:{% if b.tip == 'recall_aktif' %}var(--red){% elif b.tip in ('skt_uyari','ccp_kritik') %}var(--red){% elif b.tip == 'kritik_stok' %}var(--orange){% else %}var(--blue){% endif %};margin-top:5px;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:13px;font-weight:{% if not b.okundu %}600{% else %}400{% endif %}">{{ b.baslik }}</span>
+          <span style="font-size:11px;color:var(--muted)">{{ b.created_at.strftime('%d.%m %H:%M') }}</span>
+        </div>
+        {% if b.mesaj %}<div style="font-size:12px;color:var(--muted)">{{ b.mesaj }}</div>{% endif %}
+        <div style="margin-top:4px">
+          <span style="font-size:10.5px;background:var(--surf2);border:1px solid var(--border);border-radius:3px;padding:1px 6px;color:var(--muted)">{{ b.tip }}</span>
+          {% if b.ilgili_tip and b.ilgili_id %}
+          <a href="/{% if b.ilgili_tip == 'lot' %}depo/lot{% elif b.ilgili_tip == 'sikayet' %}sikayet{% elif b.ilgili_tip == 'numune' %}depo/numune{% endif %}/{{ b.ilgili_id }}" style="font-size:11px;color:var(--blue);margin-left:8px">Görüntüle →</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)"><i class="bi bi-bell-slash" style="font-size:40px;opacity:.3"></i><div style="margin-top:12px">Bildirim yok ✓</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · TraceWay{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block breadcrumb %}Ana Sayfa{% endblock %}
+{% block content %}
+<!-- KPI -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="kpi"><div class="kpi-label">Aktif Lot</div>
+    <div class="kpi-val" style="color:var(--blue)">{{ aktif_lot }}</div>
+    <div class="kpi-sub">Kullanılabilir stok</div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="kpi" {% if karantina %}style="border-color:var(--red)"{% endif %}>
+    <div class="kpi-label">Karantina</div>
+    <div class="kpi-val" style="color:{{ 'var(--red)' if karantina else 'var(--muted)' }}">{{ karantina }}</div>
+    <div class="kpi-sub">Bekletilen lot</div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="kpi" {% if bekleyen_numune %}style="border-color:var(--orange)"{% endif %}>
+    <div class="kpi-label">Bekleyen Numune</div>
+    <div class="kpi-val" style="color:{{ 'var(--orange)' if bekleyen_numune else 'var(--muted)' }}">{{ bekleyen_numune }}</div>
+    <div class="kpi-sub">Lab onayı bekleniyor</div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="kpi" {% if skt_yaklasan %}style="border-color:var(--orange)"{% endif %}>
+    <div class="kpi-label">SKT Yaklaşan</div>
+    <div class="kpi-val" style="color:{{ 'var(--orange)' if skt_yaklasan else 'var(--muted)' }}">{{ skt_yaklasan|length }}</div>
+    <div class="kpi-sub">30 gün içinde</div></div>
+  </div>
+</div>
+
+{% if bekleyen_numune > 0 %}
+<div class="alert-tw alert-warn mb-3">
+  <i class="bi bi-eyedropper"></i>
+  <strong>{{ bekleyen_numune }} numune</strong> lab onayı bekliyor — bu lotlar henüz kullanıma açılmadı.
+  <a href="/depo/numune" style="color:inherit;text-decoration:underline;margin-left:8px">Numunelere Git →</a>
+</div>
+{% endif %}
+
+{% if subeler %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-diagram-3 me-2" style="color:var(--blue)"></i>Şubeler</div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Şube</th><th>Kod</th><th>Şehir</th><th>Durum</th></tr></thead>
+      <tbody>
+        {% for s in subeler %}
+        <tr><td class="ps-3" style="font-weight:500">{{ s.ad }}</td>
+        <td><code>{{ s.firma_kodu }}</code></td>
+        <td>{{ s.sehir or '—' }}</td>
+        <td><span class="badge-tw b-onaylı">Aktif</span></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-calendar-x me-2" style="color:var(--orange)"></i>SKT Yaklaşan Lotlar</span>
+        <a href="/depo/stok" style="font-size:12px;color:var(--blue)">Tümü →</a>
+      </div>
+      <div class="card-body p-0">
+        {% if skt_yaklasan %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">İç Parti</th><th>Hammadde</th><th>SKT</th><th>Gün</th></tr></thead>
+          <tbody>
+            {% for lot in skt_yaklasan %}
+            {% set days = (lot.son_kullanma - now).days %}
+            <tr onclick="location.href='/depo/lot/{{ lot.id }}'" style="cursor:pointer">
+              <td class="ps-3"><code>{{ lot.ic_parti_no or lot.lot_no }}</code></td>
+              <td>{{ lot.hammadde.ad }}</td>
+              <td style="color:{{ 'var(--red)' if days < 7 else 'var(--orange)' }};font-weight:600">{{ lot.son_kullanma.strftime('%d.%m.%Y') }}</td>
+              <td style="color:{{ 'var(--red)' if days < 7 else 'var(--orange)' }}">{{ days }} gün</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:32px;text-align:center;color:var(--muted)">30 gün içinde SKT dolacak lot yok ✓</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-box-arrow-in-down me-2" style="color:var(--green)"></i>Son Hammadde Girişleri</span>
+        <a href="/depo/stok" style="font-size:12px;color:var(--blue)">Tümü →</a>
+      </div>
+      <div class="card-body p-0">
+        {% if son_lotlar %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">İç Parti</th><th>Hammadde</th><th>Miktar</th><th>Durum</th></tr></thead>
+          <tbody>
+            {% for lot in son_lotlar %}
+            <tr onclick="location.href='/depo/lot/{{ lot.id }}'" style="cursor:pointer">
+              <td class="ps-3"><code style="font-size:11px">{{ lot.ic_parti_no or lot.lot_no }}</code></td>
+              <td>{{ lot.hammadde.ad }}</td>
+              <td>{{ lot.kalan_miktar }} {{ lot.birim }}</td>
+              <td><span class="badge-tw b-{{ lot.durum.value }}">{{ lot.durum.value }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:32px;text-align:center;color:var(--muted)">Henüz lot girişi yok</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

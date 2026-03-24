@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Hammadde Girişi{% endblock %}
+{% block page_title %}Hammadde Girişi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Hammadde Girişi{% endblock %}
+{% block content %}
+<form method="POST" action="/depo/giris">
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header" style="color:var(--blue)"><i class="bi bi-receipt me-2"></i>Fatura & Tedarikçi</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Fatura No *</label><input type="text" name="fatura_no" class="form-control" placeholder="FAT-2024-001" required></div>
+          <div class="col-md-6"><label class="form-label">Fatura Tarihi *</label><input type="date" name="fatura_tarihi" class="form-control" value="{{ bugun }}" required></div>
+          <div class="col-12"><label class="form-label">Tedarikçi *</label>
+            <select name="tedarikci_id" class="form-select" required>
+              <option value="">— Seçiniz —</option>
+              {% for t in tedarikciler %}<option value="{{ t.id }}">{{ t.ad }}{% if t.kod %} ({{ t.kod }}){% endif %}</option>{% endfor %}
+            </select>
+            <div style="margin-top:5px"><a href="/depo/tedarikci" style="font-size:11px;color:var(--blue)"><i class="bi bi-plus"></i> Yeni tedarikçi ekle</a></div>
+          </div>
+          <div class="col-md-6"><label class="form-label">Para Birimi</label>
+            <select name="para_birimi" class="form-select">
+              <option value="TRY">TRY</option><option value="USD">USD</option><option value="EUR">EUR</option>
+            </select>
+          </div>
+          <div class="col-md-6"><label class="form-label">Sertifika / Analiz No</label><input type="text" name="sertifika_no" class="form-control" placeholder="SRT-001"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header" style="color:var(--green)"><i class="bi bi-layers-half me-2"></i>Lot Bilgileri</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12"><label class="form-label">Hammadde *</label>
+            <select name="hammadde_id" class="form-select" id="selHM" required>
+              <option value="">— Seçiniz —</option>
+              {% for h in hammaddeler %}<option value="{{ h.id }}" data-birim="{{ h.birim }}" data-numune="{{ 'evet' if h.numune_gerekli else 'hayir' }}">{{ h.ad }}{% if h.kod %} [{{ h.kod }}]{% endif %}</option>{% endfor %}
+            </select>
+            <div id="numune-uyari" style="display:none;margin-top:6px" class="alert-tw alert-warn" style="font-size:12px">
+              <i class="bi bi-eyedropper"></i> Bu hammadde için <strong>numune analizi gereklidir.</strong> Giriş sonrası otomatik numune kaydı açılacak, onaylanana kadar lot karantinada kalacaktır.
+            </div>
+          </div>
+          <div class="col-md-6"><label class="form-label">Hedef Depo *</label>
+            <select name="depo_id" class="form-select" required>
+              <option value="">— Seçiniz —</option>
+              {% for d in depolar %}<option value="{{ d.id }}">{{ d.ad }} ({{ d.tip }})</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6"><label class="form-label">Depo Konumu / Raf</label><input type="text" name="depo_konumu" class="form-control" placeholder="Raf-A3"></div>
+          <div class="col-md-6">
+            <label class="form-label">Tedarikçi Lot No *</label>
+            <input type="text" name="lot_no" class="form-control" placeholder="LOT-20240115-A" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">İç Parti No <small style="color:var(--muted)">(boş=otomatik)</small></label>
+            <input type="text" name="ic_parti" class="form-control" placeholder="TW-01-HM001-24-0001">
+          </div>
+          <div class="col-md-4"><label class="form-label">Miktar *</label><input type="number" name="miktar" class="form-control" step="0.001" min="0.001" id="inpMiktar" required></div>
+          <div class="col-md-4"><label class="form-label">Birim Fiyat</label><input type="number" name="birim_fiyat" class="form-control" step="0.0001" id="inpFiyat"></div>
+          <div class="col-md-4"><label class="form-label">Toplam (otomatik)</label><input type="text" class="form-control" id="inpToplam" readonly style="background:var(--surf3)!important;color:var(--green)!important"></div>
+          <div class="col-md-6"><label class="form-label">Üretim Tarihi</label><input type="date" name="uretim_tarihi" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label">Son Kullanma (SKT)</label><input type="date" name="son_kullanma" class="form-control"></div>
+          <div class="col-12"><label class="form-label">Notlar</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px">
+  <a href="/depo/stok" class="btn-ghost">İptal</a>
+  <button type="submit" class="btn-tw" style="font-size:14px;padding:9px 24px"><i class="bi bi-check-lg me-1"></i> Kaydet & QR Oluştur</button>
+</div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('selHM').addEventListener('change', function(){
+  const opt = this.options[this.selectedIndex];
+  const uyari = document.getElementById('numune-uyari');
+  if(opt.dataset.numune === 'evet') uyari.style.display='flex'; else uyari.style.display='none';
+  document.getElementById('inpMiktar').placeholder = opt.dataset.birim || 'Miktar';
+});
+function calc(){ const m=parseFloat(document.getElementById('inpMiktar').value)||0; const f=parseFloat(document.getElementById('inpFiyat').value)||0; document.getElementById('inpToplam').value = m&&f ? (m*f).toFixed(2)+' ₺' : ''; }
+document.getElementById('inpMiktar').addEventListener('input',calc);
+document.getElementById('inpFiyat').addEventListener('input',calc);
+</script>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Stok Raporu{% endblock %}
+{% block page_title %}Stok & Fire Raporu{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/rapor/">Raporlar</a> / Stok{% endblock %}
+{% block content %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-boxes me-2"></i>Hammadde Stok Özeti</div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Hammadde</th><th>Kullanılabilir</th><th>Beklemede</th><th>Karantina</th><th>SKT Yaklaşan</th><th>Durum</th></tr></thead>
+      <tbody>
+        {% for s in stok_ozet %}
+        <tr onclick="location.href='/depo/stok?hammadde_id={{ s.hammadde.id }}'" style="cursor:pointer">
+          <td class="ps-3" style="font-weight:500">{{ s.hammadde.ad }}</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:{% if s.kritik_durum %}var(--red){% else %}var(--green){% endif %};font-weight:600">{{ s.kullanilabilir }} {{ s.hammadde.birim }}</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:{{ 'var(--orange)' if s.beklemede else 'var(--muted)' }}">{{ s.beklemede }}</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:{{ 'var(--red)' if s.karantina else 'var(--muted)' }}">{{ s.karantina }}</td>
+          <td style="color:{{ 'var(--orange)' if s.skt_yaklasan else 'var(--muted)' }}">{{ s.skt_yaklasan }}</td>
+          <td>{% if s.kritik_durum %}<span class="badge-tw b-karantina">KRİTİK</span>{% else %}<span class="badge-tw b-onaylı">Normal</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% if fire_hareketler or yari_mamul_fire %}
+<div class="card">
+  <div class="card-header" style="color:var(--orange)"><i class="bi bi-fire me-2"></i>Fire Kayıtları</div>
+  <div class="card-body p-0">
+    {% if yari_mamul_fire %}
+    <div style="padding:10px 16px;background:rgba(227,179,65,.05);border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:6px">YARI MAMUL FİRE (RAF ÖMRÜ DOLDU)</div>
+      {% for ym in yari_mamul_fire %}<div style="font-size:13px;margin-bottom:4px"><code>{{ ym.parti_no }}</code> — {{ ym.ad }} — {{ ym.uretim_miktari }} {{ ym.birim }}</div>{% endfor %}
+    </div>
+    {% endif %}
+    {% if fire_hareketler %}
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Lot</th><th>Miktar</th><th>Açıklama</th><th>Tarih</th></tr></thead>
+      <tbody>
+        {% for h in fire_hareketler %}
+        <tr><td class="ps-3"><code>{{ h.lot.ic_parti_no or h.lot.lot_no if h.lot else '—' }}</code></td><td style="color:var(--orange);font-family:'JetBrains Mono',monospace">{{ h.miktar }}</td><td style="font-size:12px;color:var(--muted)">{{ h.aciklama or '—' }}</td><td style="font-size:11px;color:var(--muted)">{{ h.tarih.strftime('%d.%m.%Y') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

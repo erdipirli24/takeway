@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}FIFO Stok{% endblock %}
+{% block page_title %}FIFO Stok Durumu{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / FIFO Stok{% endblock %}
+{% block topbar_actions %}<a href="/depo/giris" class="btn-tw"><i class="bi bi-plus-lg me-1"></i> Hammadde Girişi</a>{% endblock %}
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body" style="padding:12px 16px">
+    <form method="GET" action="/depo/stok" class="d-flex flex-wrap gap-2 align-items-center">
+      <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Parti no ara..." style="max-width:200px">
+      <select name="hammadde_id" class="form-select" style="max-width:180px">
+        <option value="">Tüm Hammaddeler</option>
+        {% for h in hammaddeler %}<option value="{{ h.id }}" {% if filtre_hm == h.id %}selected{% endif %}>{{ h.ad }}</option>{% endfor %}
+      </select>
+      <select name="depo_id" class="form-select" style="max-width:160px">
+        <option value="">Tüm Depolar</option>
+        {% for d in depolar %}<option value="{{ d.id }}" {% if filtre_depo == d.id %}selected{% endif %}>{{ d.ad }}</option>{% endfor %}
+      </select>
+      <select name="durum" class="form-select" style="max-width:150px">
+        <option value="">Tüm Durumlar</option>
+        {% for d in LotDurum %}<option value="{{ d.value }}" {% if filtre_durum == d.value %}selected{% endif %}>{{ d.value }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn-ghost"><i class="bi bi-funnel"></i></button>
+      <a href="/depo/stok" class="btn-ghost">Temizle</a>
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header d-flex justify-content-between">
+    <span><i class="bi bi-layers-half me-2"></i>Lotlar — FIFO Sıralı</span>
+    <span style="font-size:12px;color:var(--muted)">{{ lotlar|length }} kayıt</span>
+  </div>
+  <div class="card-body p-0">
+    {% if lotlar %}
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th class="ps-3">FIFO</th><th>İç Parti No</th><th>Hammadde</th><th>Tedarikçi Lot</th>
+        <th>Kalan / Giriş</th><th>SKT</th><th>Depo</th><th>Durum</th>
+      </tr></thead>
+      <tbody>
+        {% set prev_hm = namespace(id=None, sira=0) %}
+        {% for lot in lotlar %}
+        {% if lot.hammadde_id != prev_hm.id %}{% set prev_hm.id = lot.hammadde_id %}{% set prev_hm.sira = 0 %}{% endif %}
+        {% set prev_hm.sira = prev_hm.sira + 1 %}
+        <tr onclick="location.href='/depo/lot/{{ lot.id }}'" style="cursor:pointer">
+          <td class="ps-3">
+            {% if lot.durum.value in ['onaylı','kullanımda'] %}
+            <span class="fifo-badge {% if prev_hm.sira == 1 %}first{% endif %}">{{ prev_hm.sira }}</span>
+            {% endif %}
+          </td>
+          <td><code style="font-size:11.5px;color:var(--green)">{{ lot.ic_parti_no or '—' }}</code></td>
+          <td style="font-weight:500">{{ lot.hammadde.ad }}</td>
+          <td><code style="font-size:11px">{{ lot.lot_no }}</code></td>
+          <td>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px">{{ lot.kalan_miktar }} / {{ lot.giris_miktar }} {{ lot.birim }}</div>
+            {% set pct = ((lot.kalan_miktar / lot.giris_miktar)*100)|int if lot.giris_miktar else 0 %}
+            <div class="prog" style="margin-top:3px;width:80px"><div class="prog-bar {% if pct < 20 %}danger{% elif pct < 50 %}warn{% endif %}" style="width:{{ pct }}%"></div></div>
+          </td>
+          <td>
+            {% if lot.son_kullanma %}
+            {% set days = (lot.son_kullanma - now).days %}
+            <span style="font-size:12px;font-weight:{% if days < 30 %}600{% else %}400{% endif %};color:{% if days < 0 %}var(--red){% elif days < 7 %}var(--red){% elif days < 30 %}var(--orange){% else %}var(--text){% endif %}">
+              {{ lot.son_kullanma.strftime('%d.%m.%Y') }}
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td style="font-size:12px">{{ lot.depo.ad if lot.depo else '—' }}{% if lot.depo_konumu %}<br><span style="color:var(--muted)">{{ lot.depo_konumu }}</span>{% endif %}</td>
+          <td><span class="badge-tw b-{{ lot.durum.value }}">{{ lot.durum.value }}</span>
+            {% if lot.hammadde.alerjenler %}
+            {% for a in lot.hammadde.alerjen_listesi %}<span class="alerjen-tag">{{ a }}</span>{% endfor %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)"><i class="bi bi-layers" style="font-size:40px;opacity:.3"></i><div style="margin-top:12px">Stok kaydı bulunamadı</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

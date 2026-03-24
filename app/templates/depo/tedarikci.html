@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Tedarikçiler{% endblock %}
+{% block page_title %}Tedarikçiler{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Tedarikçiler{% endblock %}
+{% block topbar_actions %}<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalEkle"><i class="bi bi-plus-lg me-1"></i> Yeni Tedarikçi</button>{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header"><i class="bi bi-truck me-2"></i>Tedarikçi Listesi</div>
+<div class="card-body p-0">
+  {% if tedarikciler %}
+  <table class="table mb-0">
+    <thead><tr><th class="ps-3">Ad</th><th>Kod</th><th>Vergi No</th><th>Telefon</th><th>Toplam Lot</th><th>Karantina</th><th>Puan</th></tr></thead>
+    <tbody>
+      {% for t in tedarikciler %}
+      {% set puan = 100 - ((t.karantina_lot / t.toplam_lot * 100)|int if t.toplam_lot else 0) %}
+      <tr>
+        <td class="ps-3" style="font-weight:500">{{ t.ad }}</td>
+        <td><code>{{ t.kod or '—' }}</code></td>
+        <td>{{ t.vergi_no or '—' }}</td>
+        <td>{{ t.telefon or '—' }}</td>
+        <td style="font-family:'JetBrains Mono',monospace">{{ t.toplam_lot }}</td>
+        <td style="color:{{ 'var(--red)' if t.karantina_lot else 'var(--muted)' }};font-family:'JetBrains Mono',monospace">{{ t.karantina_lot }}</td>
+        <td>
+          <span style="font-weight:600;color:{% if puan>=90 %}var(--green){% elif puan>=70 %}var(--orange){% else %}var(--red){% endif %}">
+            {% if t.toplam_lot %}{{ puan }}%{% else %}—{% endif %}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="padding:48px;text-align:center;color:var(--muted)">Tedarikçi eklenmemiş</div>
+  {% endif %}
+</div></div>
+<div class="modal fade" id="modalEkle" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Tedarikçi</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/depo/tedarikci/ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row g-2">
+        <div class="col-8"><label class="form-label">Tedarikçi Adı *</label><input type="text" name="ad" class="form-control" required></div>
+        <div class="col-4"><label class="form-label">Kod</label><input type="text" name="kod" class="form-control"></div>
+      </div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Vergi No</label><input type="text" name="vergi_no" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Telefon</label><input type="text" name="telefon" class="form-control"></div>
+      </div>
+      <div><label class="form-label">E-posta</label><input type="email" name="email" class="form-control"></div>
+      <div><label class="form-label">Adres</label><textarea name="adres" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

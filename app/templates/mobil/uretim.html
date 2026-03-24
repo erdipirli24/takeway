@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>Üretim · TraceWay</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{--bg:#0d1117;--surf:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--green:#2ea043;--blue:#58a6ff;--red:#f85149;--orange:#e3b341}
+    *{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;min-height:100vh}
+    .topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;gap:12px;align-items:center;position:sticky;top:0}
+    .back{color:var(--muted);font-size:22px;text-decoration:none}
+    h2{font-size:15px;font-weight:700}
+    .content{padding:16px;display:flex;flex-direction:column;gap:12px}
+    .card{background:var(--surf);border:1px solid var(--border);border-radius:10px}
+    .card-title{padding:12px 14px;font-size:13px;font-weight:600;border-bottom:1px solid var(--border);color:var(--muted)}
+    .asama-row{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+    .asama-row:last-child{border-bottom:none}
+    .asama-no{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+    .btn-tamam{background:var(--green);border:none;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:7px;cursor:pointer;margin-left:auto}
+    .btn-ccp{background:rgba(88,166,255,.15);border:1px solid rgba(88,166,255,.3);color:var(--blue);font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer}
+    form.inline{display:inline}
+    input.small{background:#0d1117;border:1px solid var(--border);color:var(--text);font-size:13px;padding:8px 10px;border-radius:7px;width:100%;outline:none;margin-top:6px}
+    .progress-wrap{background:rgba(255,255,255,.06);border-radius:4px;height:8px;margin-top:8px}
+    .progress-bar{height:100%;border-radius:4px;background:var(--green)}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/mobil/" class="back"><i class="bi bi-arrow-left"></i></a>
+  <h2>{{ emir.emri_no }}</h2>
+</div>
+<div class="content">
+
+  <div class="card" style="padding:14px">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px">{{ emir.urun_adi }}</div>
+    <div style="font-size:12px;color:var(--muted)">Hedef: {{ emir.hedef_miktar }} {{ emir.hedef_birim }}</div>
+    {% set tamamlanan = emir.asama_kayitlari|selectattr('tamamlandi','eq',true)|list|length %}
+    {% set toplam = emir.asama_kayitlari|length %}
+    <div class="progress-wrap"><div class="progress-bar" style="width:{{ (tamamlanan/toplam*100)|int if toplam else 0 }}%"></div></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:3px">{{ tamamlanan }}/{{ toplam }} aşama tamamlandı</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="bi bi-list-check me-2"></i>Üretim Aşamaları</div>
+    {% for a in emir.asama_kayitlari %}
+    <div class="asama-row">
+      <div class="asama-no" style="background:{% if a.tamamlandi %}var(--green){% else %}var(--border){% endif %};color:{% if a.tamamlandi %}#fff{% else %}var(--muted){% endif %}">
+        {% if a.tamamlandi %}✓{% else %}{{ a.sira }}{% endif %}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13.5px;{% if a.tamamlandi %}text-decoration:line-through;color:var(--muted){% else %}font-weight:500{% endif %}">{{ a.ad }}</div>
+        {% if a.bitis %}<div style="font-size:11px;color:var(--muted)">{{ a.bitis.strftime('%H:%M') }}</div>{% endif %}
+      </div>
+      {% if not a.tamamlandi %}
+      <form method="POST" action="/mobil/uretim/{{ emir.id }}/asama/{{ a.id }}/tamamla" class="inline">
+        <input type="hidden" name="notlar" value="">
+        <button type="submit" class="btn-tamam">✓</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if ccp_tanimlar %}
+  <div class="card">
+    <div class="card-title"><i class="bi bi-clipboard-data me-2"></i>CCP Ölçüm Gir</div>
+    <form method="POST" action="/mobil/uretim/{{ emir.id }}/ccp" style="padding:14px;display:flex;flex-direction:column;gap:10px">
+      <div>
+        <label style="font-size:12px;color:var(--muted)">CCP Noktası</label>
+        <select name="ccp_tanim_id" class="small" required>
+          <option value="">— Seçiniz —</option>
+          {% for c in ccp_tanimlar %}<option value="{{ c.id }}">{{ c.ad }}{% if c.birim %} ({{ c.birim }}){% endif %}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="row g-2" style="display:flex;gap:8px">
+        <div style="flex:2"><label style="font-size:12px;color:var(--muted)">Ölçülen Değer</label><input type="number" name="olculen_deger" step="0.01" class="small" required></div>
+        <div style="flex:1"><label style="font-size:12px;color:var(--muted)">Birim</label><input type="text" name="birim" class="small" placeholder="°C"></div>
+      </div>
+      <button type="submit" class="btn-ccp" style="width:100%;padding:10px;font-size:13px"><i class="bi bi-clipboard-check me-2"></i>Ölçüm Kaydet</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <a href="/uretim/{{ emir.id }}" style="display:block;text-align:center;padding:12px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);border-radius:8px;color:var(--blue);font-size:13px;text-decoration:none">
+    <i class="bi bi-box-arrow-up-right me-1"></i> Tam Detay (Masaüstü)
+  </a>
+</div>
+</body>
+</html>

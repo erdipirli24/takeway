@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Kalite & HACCP{% endblock %}
+{% block page_title %}Kalite & HACCP Yönetimi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Kalite{% endblock %}
+{% block topbar_actions %}
+<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalCCP">+ CCP Tanımla</button>
+<a href="/kalite/ccp/olcum" class="btn-ghost"><i class="bi bi-clipboard-data me-1"></i> Ölçümler</a>
+<a href="/kalite/temizlik" class="btn-ghost"><i class="bi bi-droplet me-1"></i> Temizlik</a>
+{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="kpi"><div class="kpi-label">CCP Noktası</div><div class="kpi-val" style="color:var(--blue)">{{ ccp_tanimlar|length }}</div><div class="kpi-sub">Aktif kontrol noktası</div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi" {% if sapma_sayisi %}style="border-color:var(--red)"{% endif %}><div class="kpi-label">Sapma</div><div class="kpi-val" style="color:{{ 'var(--red)' if sapma_sayisi else 'var(--muted)' }}">{{ sapma_sayisi }}</div><div class="kpi-sub">Onaylanmayan ölçüm</div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi"><div class="kpi-label">Bugün Temizlik</div><div class="kpi-val" style="color:var(--green)">{{ bugun_temizlik }}</div><div class="kpi-sub">Tamamlanan kayıt</div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between"><span><i class="bi bi-shield-check me-2" style="color:var(--green)"></i>CCP Kontrol Noktaları</span></div>
+      <div class="card-body p-0">
+        {% if ccp_tanimlar %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Ad</th><th>Kategori</th><th>Limit</th><th>Birim</th></tr></thead>
+          <tbody>
+            {% for c in ccp_tanimlar %}
+            <tr>
+              <td class="ps-3" style="font-weight:500">{{ c.ad }}</td>
+              <td><span class="badge-tw {% if c.kategori.value=='biyolojik' %}b-karantina{% elif c.kategori.value=='kimyasal' %}b-beklemede{% elif c.kategori.value=='alerjen' %}b-recall{% else %}b-transfer{% endif %}">{{ c.kategori.value }}</span></td>
+              <td style="font-size:12px;font-family:'JetBrains Mono',monospace">
+                {% if c.kritik_limit_min and c.kritik_limit_max %}{{ c.kritik_limit_min }} – {{ c.kritik_limit_max }}
+                {% elif c.kritik_limit_max %}≤ {{ c.kritik_limit_max }}
+                {% elif c.kritik_limit_min %}≥ {{ c.kritik_limit_min }}
+                {% else %}{{ c.hedef_deger or '—' }}{% endif %}
+              </td>
+              <td style="font-size:12px">{{ c.birim or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:32px;text-align:center;color:var(--muted)">CCP noktası tanımlanmamış</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-clipboard-data me-2" style="color:var(--blue)"></i>Son Ölçümler</span>
+        <a href="/kalite/ccp/olcum" style="font-size:12px;color:var(--blue)">Tümü →</a>
+      </div>
+      <div class="card-body p-0">
+        {% if son_olcumler %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">CCP</th><th>Değer</th><th>Durum</th><th>Tarih</th></tr></thead>
+          <tbody>
+            {% for o in son_olcumler %}
+            <tr>
+              <td class="ps-3" style="font-size:12.5px">{{ o.ccp_tanim.ad if o.ccp_tanim else '—' }}</td>
+              <td style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ o.olculen_deger }} {{ o.birim or '' }}</td>
+              <td><span class="badge-tw {% if o.durum.value=='uygun' %}b-onaylı{% elif o.durum.value=='kritik' %}b-karantina{% else %}b-beklemede{% endif %}">{{ o.durum.value }}</span></td>
+              <td style="font-size:11px;color:var(--muted)">{{ o.olcum_tarihi.strftime('%d.%m %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:32px;text-align:center;color:var(--muted)">Ölçüm kaydı yok</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalCCP" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni CCP Noktası Tanımla</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/kalite/ccp/ekle">
+    <div class="modal-body"><div class="row g-3">
+      <div class="col-md-7"><label class="form-label">Ad *</label><input type="text" name="ad" class="form-control" placeholder="Pişirme Sıcaklığı Kontrolü" required></div>
+      <div class="col-md-5"><label class="form-label">Kategori *</label>
+        <select name="kategori" class="form-select" required>{% for k in CCPKategori %}<option value="{{ k.value }}">{{ k.value }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-md-4"><label class="form-label">Min Limit</label><input type="number" name="kritik_limit_min" class="form-control" step="0.01"></div>
+      <div class="col-md-4"><label class="form-label">Max Limit</label><input type="number" name="kritik_limit_max" class="form-control" step="0.01"></div>
+      <div class="col-md-4"><label class="form-label">Birim</label><input type="text" name="birim" class="form-control" placeholder="°C, pH, %"></div>
+      <div class="col-12"><label class="form-label">Ölçüm Yöntemi</label><input type="text" name="olcum_yontemi" class="form-control" placeholder="Termometre ile ölç..."></div>
+      <div class="col-12"><label class="form-label">Düzeltici Eylem (limit aşılırsa)</label><textarea name="duzeltici_eylem" class="form-control" rows="2" placeholder="Ürünü ayır, yeniden işle..."></textarea></div>
+      <div class="col-md-6"><label class="form-label">Sorumlu Unvan</label><input type="text" name="sorumlu_unvan" class="form-control" placeholder="Üretim Şefi"></div>
+    </div></div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

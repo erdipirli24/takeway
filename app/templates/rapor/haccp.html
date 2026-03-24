@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}HACCP Raporu{% endblock %}
+{% block page_title %}HACCP Uyum Raporu{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/rapor/">Raporlar</a> / HACCP{% endblock %}
+{% block content %}
+<div class="card mb-3"><div class="card-body" style="padding:12px 16px">
+  <form method="GET" class="d-flex gap-2 align-items-end">
+    <div><label class="form-label">Başlangıç</label><input type="date" name="baslangic" value="{{ baslangic }}" class="form-control"></div>
+    <div><label class="form-label">Bitiş</label><input type="date" name="bitis" value="{{ bitis }}" class="form-control"></div>
+    <button type="submit" class="btn-tw">Filtrele</button>
+  </form>
+</div></div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="kpi"><div class="kpi-label">Toplam Ölçüm</div><div class="kpi-val" style="color:var(--blue)">{{ toplam }}</div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi"><div class="kpi-label">Uygun</div><div class="kpi-val" style="color:var(--green)">{{ uygun }}</div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi" {% if kritik %}style="border-color:var(--red)"{% endif %}><div class="kpi-label">Kritik</div><div class="kpi-val" style="color:var(--red)">{{ kritik }}</div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi" style="border-color:{% if uyum_orani >= 95 %}var(--green){% elif uyum_orani >= 80 %}var(--orange){% else %}var(--red){% endif %}"><div class="kpi-label">Uyum Oranı</div><div class="kpi-val" style="color:{% if uyum_orani >= 95 %}var(--green){% elif uyum_orani >= 80 %}var(--orange){% else %}var(--red){% endif %}">%{{ uyum_orani }}</div></div></div>
+</div>
+<div class="card"><div class="card-header"><i class="bi bi-clipboard-data me-2"></i>CCP Ölçüm Kayıtları</div>
+<div class="card-body p-0">
+  {% if olcumler %}
+  <table class="table mb-0">
+    <thead><tr><th class="ps-3">CCP Noktası</th><th>Ölçülen</th><th>Durum</th><th>Üretim</th><th>Düzeltici</th><th>Tarih</th></tr></thead>
+    <tbody>
+      {% for o in olcumler %}
+      <tr>
+        <td class="ps-3" style="font-weight:500">{{ o.ccp_tanim.ad if o.ccp_tanim else '—' }}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:{% if o.durum.value=='uygun' %}var(--green){% elif o.durum.value=='kritik' %}var(--red){% else %}var(--orange){% endif %}">{{ o.olculen_deger }} {{ o.birim or '' }}</td>
+        <td><span class="badge-tw {% if o.durum.value=='uygun' %}b-onaylı{% elif o.durum.value=='kritik' %}b-karantina{% else %}b-beklemede{% endif %}">{{ o.durum.value }}</span></td>
+        <td><code style="font-size:11px">{{ o.uretim_emri.emri_no if o.uretim_emri else '—' }}</code></td>
+        <td style="font-size:12px">{% if o.durum.value != 'uygun' %}{% if o.duzeltici_yapildi %}<span style="color:var(--green)">✓</span>{% else %}<span style="color:var(--red)">✗</span>{% endif %}{% endif %}</td>
+        <td style="font-size:11px;color:var(--muted)">{{ o.olcum_tarihi.strftime('%d.%m.%Y %H:%M') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="padding:32px;text-align:center;color:var(--muted)">Bu dönemde ölçüm kaydı yok</div>
+  {% endif %}
+</div></div>
+{% endblock %}

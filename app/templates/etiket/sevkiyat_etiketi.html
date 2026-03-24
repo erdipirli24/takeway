@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"><title>İrsaliye — {{ sv.sevk_no }}</title>
+  <style>
+    @page { size: A4; margin: 15mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; color: #000; font-size: 9pt; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 6mm; margin-bottom: 6mm; }
+    .firma-bilgi h1 { font-size: 14pt; font-weight: 900; color: #006600; }
+    .firma-bilgi p { font-size: 8pt; color: #555; line-height: 1.5; }
+    .belge-bilgi { text-align: right; }
+    .belge-no { font-size: 16pt; font-weight: bold; }
+    .belge-tip { font-size: 8pt; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+    table { width: 100%; border-collapse: collapse; margin: 4mm 0; }
+    th { background: #006600; color: #fff; padding: 2mm 3mm; font-size: 8pt; text-align: left; }
+    td { padding: 2mm 3mm; border-bottom: 0.5px solid #ddd; font-size: 8pt; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .bilgi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin: 4mm 0; }
+    .bilgi-box { border: 1px solid #ddd; border-radius: 2mm; padding: 3mm; }
+    .bilgi-box h3 { font-size: 8pt; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2mm; }
+    .bilgi-box p { font-size: 8.5pt; line-height: 1.6; }
+    .imza { display: flex; justify-content: space-between; margin-top: 15mm; }
+    .imza-box { border-top: 1px solid #000; padding-top: 3mm; width: 60mm; text-align: center; font-size: 7.5pt; color: #555; }
+    .footer { margin-top: 8mm; border-top: 1px solid #ddd; padding-top: 3mm; font-size: 7pt; color: #888; text-align: center; }
+    .qr-box { border: 1px solid #ddd; padding: 2mm; display: inline-block; }
+    @media screen { body { background: #888; padding: 20px; } .sayfa { background: #fff; padding: 15mm; max-width: 210mm; margin: 0 auto 10px; box-shadow: 0 2px 12px rgba(0,0,0,.3); } .print-btn { position: fixed; top: 20px; right: 20px; background: #006600; color: #fff; border: none; padding: 12px 24px; border-radius: 6px; font-size: 14px; cursor: pointer; z-index: 999; } }
+    @media print { .print-btn { display: none; } }
+  </style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨 Yazdır / PDF</button>
+<div class="sayfa">
+  <div class="header">
+    <div class="firma-bilgi">
+      <h1>{% if firma %}{{ firma.ad }}{% else %}TraceWay{% endif %}</h1>
+      <p>{% if firma %}{{ firma.adres or '' }}<br>{{ firma.telefon or '' }} · {{ firma.email or '' }}{% endif %}</p>
+    </div>
+    <div class="belge-bilgi">
+      <div class="belge-tip">İrsaliye</div>
+      <div class="belge-no">{{ sv.sevk_no }}</div>
+      <div style="font-size:9pt;margin-top:2mm">{{ sv.sevk_tarihi.strftime('%d.%m.%Y') if sv.sevk_tarihi else now.strftime('%d.%m.%Y') }}</div>
+      {% if sv.qr_data %}
+      <div style="margin-top:3mm">
+        <div class="qr-box"><img src="data:image/png;base64,{{ sv.qr_data }}" style="width:25mm;height:25mm;display:block"></div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="bilgi-grid">
+    <div class="bilgi-box">
+      <h3>Alıcı</h3>
+      <p><strong>{{ sv.siparis.musteri.ad if sv.siparis and sv.siparis.musteri else '—' }}</strong><br>
+      {{ sv.siparis.musteri.vergi_no if sv.siparis and sv.siparis.musteri and sv.siparis.musteri.vergi_no else '' }}<br>
+      {{ sv.siparis.sevk_adresi if sv.siparis and sv.siparis.sevk_adresi else '' }}</p>
+    </div>
+    <div class="bilgi-box">
+      <h3>Nakliye Bilgileri</h3>
+      <p>Nakliyeci: <strong>{{ sv.nakliyeci or '—' }}</strong><br>
+      Plaka: <strong>{{ sv.plaka or '—' }}</strong><br>
+      Şoför: {{ sv.sofor or '—' }}<br>
+      Bağlı Sipariş: <strong>{{ sv.siparis.siparis_no if sv.siparis else '—' }}</strong></p>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>#</th><th>Ürün Adı</th><th>Parti No</th><th>Miktar</th><th>Birim</th><th>SKT</th></tr></thead>
+    <tbody>
+      {% for i, k in enumerate(sv.kalemler, 1) %}
+      <tr>
+        <td>{{ i }}</td>
+        <td>{{ k.urun_parti.urun.ad if k.urun_parti and k.urun_parti.urun else '—' }}</td>
+        <td><code>{{ k.urun_parti.parti_no if k.urun_parti else '—' }}</code></td>
+        <td style="font-weight:bold">{{ k.miktar }}</td>
+        <td>{{ k.birim or '—' }}</td>
+        <td>{{ k.urun_parti.son_kullanma.strftime('%d.%m.%Y') if k.urun_parti and k.urun_parti.son_kullanma else '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:#888">Kalem yok</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if sv.notlar %}
+  <div style="background:#fffde7;border:1px solid #f9a825;border-radius:2mm;padding:3mm;font-size:8.5pt;margin-top:3mm">
+    <strong>Not:</strong> {{ sv.notlar }}
+  </div>
+  {% endif %}
+
+  <div class="imza">
+    <div class="imza-box">Teslim Eden İmza</div>
+    <div class="imza-box">Teslim Alan İmza / Kaşe</div>
+    <div class="imza-box">Tarih: ___/___/______</div>
+  </div>
+
+  <div class="footer">
+    TraceWay Gıda İzlenebilirlik Sistemi · Baskı: {{ now.strftime('%d.%m.%Y %H:%M') }}
+  </div>
+</div>
+</body>
+</html>

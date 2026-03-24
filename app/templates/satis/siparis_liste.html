@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Siparişler{% endblock %}
+{% block page_title %}Satış Siparişleri{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Siparişler{% endblock %}
+{% block topbar_actions %}<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalEkle"><i class="bi bi-plus-lg me-1"></i> Yeni Sipariş</button>{% endblock %}
+{% block content %}
+<div class="card mb-3"><div class="card-body" style="padding:12px 16px">
+  <form method="GET" class="d-flex gap-2">
+    <select name="durum" class="form-select" style="max-width:160px"><option value="">Tüm Durumlar</option>{% for d in SiparisDurum %}<option value="{{ d.value }}" {% if filtre_durum==d.value %}selected{% endif %}>{{ d.value }}</option>{% endfor %}</select>
+    <button type="submit" class="btn-ghost"><i class="bi bi-funnel"></i></button>
+  </form>
+</div></div>
+<div class="card">
+  <div class="card-header"><i class="bi bi-cart me-2"></i>Sipariş Listesi</div>
+  <div class="card-body p-0">
+    {% if siparisler %}
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Sipariş No</th><th>Müşteri</th><th>Termin</th><th>Durum</th><th>Kalem</th></tr></thead>
+      <tbody>
+        {% for s in siparisler %}
+        <tr onclick="location.href='/satis/siparis/{{ s.id }}'" style="cursor:pointer">
+          <td class="ps-3"><code style="color:var(--blue)">{{ s.siparis_no }}</code></td>
+          <td style="font-weight:500">{{ s.musteri.ad if s.musteri else '—' }}</td>
+          <td style="font-size:12px">{{ s.istenen_termin.strftime('%d.%m.%Y') if s.istenen_termin else '—' }}</td>
+          <td><span class="badge-tw {% if s.durum.value=='teslim' %}b-onaylı{% elif s.durum.value=='iptal' %}b-karantina{% elif s.durum.value=='taslak' %}b-beklemede{% else %}b-transfer{% endif %}">{{ s.durum.value }}</span></td>
+          <td style="font-size:12px;color:var(--muted)">{{ s.kalemler|length }} kalem</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)">Sipariş yok</div>
+    {% endif %}
+  </div>
+</div>
+<div class="modal fade" id="modalEkle" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Sipariş</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/satis/siparis/ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Müşteri *</label><select name="musteri_id" class="form-select" required><option value="">— Seçiniz —</option>{% for m in musteriler %}<option value="{{ m.id }}">{{ m.ad }}</option>{% endfor %}</select></div>
+      <div><label class="form-label">İstenen Termin</label><input type="date" name="istenen_termin" class="form-control"></div>
+      <div><label class="form-label">Sevk Adresi</label><textarea name="sevk_adresi" class="form-control" rows="2"></textarea></div>
+      <div><label class="form-label">Notlar</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Sipariş Oluştur</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Depolar{% endblock %}
+{% block page_title %}Depo Yönetimi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Depolar{% endblock %}
+{% block topbar_actions %}<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalEkle"><i class="bi bi-plus-lg me-1"></i> Yeni Depo</button>{% endblock %}
+{% block content %}
+<div class="row g-3">
+  {% for d in depolar %}
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:15px;font-weight:600">{{ d.ad }}</div>
+          <code style="font-size:11px">{{ d.kod or '' }}</code>
+        </div>
+        <span class="badge-tw b-onaylı" style="margin-bottom:10px">{{ d.tip }}</span>
+        {% if d.min_sicaklik is not none %}
+        <div style="font-size:12px;color:var(--blue);margin-top:6px"><i class="bi bi-thermometer-half me-1"></i>{{ d.min_sicaklik }}°C — {{ d.max_sicaklik }}°C</div>
+        {% endif %}
+        {% if d.adres %}<div style="font-size:12px;color:var(--muted);margin-top:4px">{{ d.adres }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12"><div style="padding:48px;text-align:center;color:var(--muted)">Henüz depo tanımlanmamış</div></div>
+  {% endfor %}
+</div>
+<div class="modal fade" id="modalEkle" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Depo Tanımla</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/depo/tanimla">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row g-2">
+        <div class="col-8"><label class="form-label">Depo Adı *</label><input type="text" name="ad" class="form-control" required></div>
+        <div class="col-4"><label class="form-label">Kod</label><input type="text" name="kod" class="form-control"></div>
+      </div>
+      <div><label class="form-label">Tip</label>
+        <select name="tip" class="form-select"><option value="hammadde">Hammadde</option><option value="mamul">Mamul</option><option value="yari_mamul">Yarı Mamul</option><option value="genel">Genel</option></select>
+      </div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Min Sıcaklık (°C)</label><input type="number" name="min_sicaklik" class="form-control" step="0.1"></div>
+        <div class="col-6"><label class="form-label">Max Sıcaklık (°C)</label><input type="number" name="max_sicaklik" class="form-control" step="0.1"></div>
+      </div>
+      <div><label class="form-label">Adres / Açıklama</label><textarea name="adres" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

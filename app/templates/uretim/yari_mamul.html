@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Yarı Mamul Stok{% endblock %}
+{% block page_title %}Yarı Mamul Stok{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/uretim/">Üretim</a> / Yarı Mamul{% endblock %}
+{% block content %}
+{% if fire_sayisi > 0 %}
+<div class="alert-tw alert-warn mb-3"><i class="bi bi-fire"></i> <strong>{{ fire_sayisi }} yarı mamul</strong> raf ömrü dolduğundan otomatik olarak fire edildi.</div>
+{% endif %}
+<div class="card">
+  <div class="card-header"><i class="bi bi-layers me-2" style="color:var(--purple)"></i>Yarı Mamul Partileri</div>
+  <div class="card-body p-0">
+    {% if yari_mamuller %}
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Parti No</th><th>Ad</th><th>Kalan</th><th>Raf Ömrü</th><th>SKT</th><th>Durum</th></tr></thead>
+      <tbody>
+        {% for ym in yari_mamuller %}
+        {% set kalan_saat = ((ym.son_kullanma - now).total_seconds() / 3600)|int if ym.son_kullanma and ym.durum.value == 'stokta' else 0 %}
+        <tr>
+          <td class="ps-3"><code>{{ ym.parti_no }}</code></td>
+          <td style="font-weight:500">{{ ym.ad }}</td>
+          <td style="font-family:'JetBrains Mono',monospace">{{ ym.kalan_miktar }} / {{ ym.uretim_miktari }} {{ ym.birim }}</td>
+          <td style="font-size:12px">{{ ym.raf_omru_gun }} gün</td>
+          <td>
+            {% if ym.son_kullanma %}
+            <span style="font-size:12.5px;font-weight:600;color:{% if kalan_saat < 0 %}var(--red){% elif kalan_saat < 24 %}var(--red){% elif kalan_saat < 48 %}var(--orange){% else %}var(--text){% endif %}">
+              {{ ym.son_kullanma.strftime('%d.%m.%Y %H:%M') }}
+              {% if ym.durum.value == 'stokta' and kalan_saat > 0 %}<small>({{ kalan_saat }}s)</small>{% endif %}
+            </span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge-tw {% if ym.durum.value=='stokta' %}b-onaylı{% elif ym.durum.value=='kullanımda' %}b-kullanımda{% elif ym.durum.value=='fire' %}b-karantina{% else %}b-tükendi{% endif %}">
+              {{ ym.durum.value }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)"><i class="bi bi-layers" style="font-size:40px;opacity:.3"></i><div style="margin-top:12px">Yarı mamul kaydı yok</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

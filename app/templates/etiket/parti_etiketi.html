@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ürün Etiketi — {{ parti.parti_no }}</title>
+  <style>
+    @page { size: 100mm 70mm; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Arial', sans-serif; background: #fff; color: #000; }
+    .etiket { width: 100mm; height: 70mm; border: 2px solid #000; padding: 3mm; display: grid; grid-template-columns: 1fr 28mm; gap: 2mm; page-break-after: always; }
+    .sol { display: flex; flex-direction: column; gap: 1.5mm; }
+    .firma-logo { font-size: 8pt; font-weight: 900; color: #006600; border-bottom: 1px solid #006600; padding-bottom: 1mm; margin-bottom: 1mm; }
+    .urun-adi { font-size: 11pt; font-weight: bold; }
+    .parti-no { font-size: 9pt; font-weight: bold; color: #006600; font-family: monospace; }
+    .satir { display: flex; gap: 2mm; font-size: 7pt; }
+    .label { color: #555; min-width: 22mm; }
+    .val { font-weight: 600; }
+    .skt { font-size: 9pt; font-weight: bold; color: #cc0000; }
+    .alerjen-box { background: #fff8e1; border: 1px solid #f57f17; border-radius: 1mm; padding: 1mm 2mm; margin-top: 1mm; }
+    .alerjen-title { font-size: 6.5pt; font-weight: bold; color: #e65100; }
+    .alerjen-list { font-size: 6.5pt; color: #bf360c; font-weight: 600; }
+    .sag { display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+    .qr-img { width: 25mm; height: 25mm; }
+    .footer { font-size: 5.5pt; color: #999; border-top: 0.5px solid #ddd; padding-top: 1mm; margin-top: auto; }
+    @media screen {
+      body { background: #888; display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 10px; }
+      .etiket { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+      .print-btn { background: #2ea043; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+<div class="no-print" style="display:flex;gap:10px;margin-bottom:10px">
+  <button class="print-btn" onclick="window.print()">🖨 Yazdır ({{ adet }} adet)</button>
+  <button onclick="history.back()" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);padding:8px 16px;border-radius:6px;cursor:pointer">← Geri</button>
+</div>
+
+{% for i in range(adet) %}
+<div class="etiket">
+  <div class="sol">
+    <div class="firma-logo">{% if firma %}{{ firma.ad }}{% else %}TraceWay{% endif %}</div>
+    <div class="urun-adi">{{ parti.urun.ad if parti.urun else '—' }}</div>
+    <div class="parti-no">Parti: {{ parti.parti_no }}</div>
+    <div class="satir"><span class="label">Net Miktar:</span><span class="val">{{ parti.uretim_miktari }} {{ parti.birim }}</span></div>
+    <div class="satir"><span class="label">Üretim Tarihi:</span><span class="val">{{ parti.uretim_tarihi.strftime('%d.%m.%Y') if parti.uretim_tarihi else '—' }}</span></div>
+    <div style="margin-top:2mm">
+      <div style="font-size:7pt;color:#555">Son Kullanma Tarihi:</div>
+      <div class="skt">{{ parti.son_kullanma.strftime('%d.%m.%Y') if parti.son_kullanma else '—' }}</div>
+    </div>
+    {% if alerjenler %}
+    <div class="alerjen-box">
+      <div class="alerjen-title">⚠ ALLERJEN BİLGİSİ</div>
+      <div class="alerjen-list">{{ alerjenler|join(', ') }}</div>
+    </div>
+    {% else %}
+    <div style="font-size:6.5pt;color:#006600;margin-top:1mm">✓ Allerjen içermez</div>
+    {% endif %}
+    <div class="footer">Üretim Emri: {{ parti.uretim_emri.emri_no if parti.uretim_emri else '—' }} · Baskı: {{ now.strftime('%d.%m.%Y') }}</div>
+  </div>
+  <div class="sag">
+    {% if parti.qr_data %}
+    <img src="data:image/png;base64,{{ parti.qr_data }}" class="qr-img">
+    {% endif %}
+    {% if parti.barkod %}<div style="font-size:6pt;text-align:center;font-family:monospace">{{ parti.barkod }}</div>{% endif %}
+    {% if firma and firma.telefon %}<div style="font-size:6pt;color:#555;text-align:center;margin-top:auto">{{ firma.telefon }}</div>{% endif %}
+  </div>
+</div>
+{% endfor %}
+</body>
+</html>

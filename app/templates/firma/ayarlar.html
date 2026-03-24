@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Firma Ayarları{% endblock %}
+{% block page_title %}Firma Ayarları{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Ayarlar{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-building me-2"></i>Firma Bilgileri</div>
+      <div class="card-body">
+        {% if firma %}
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Firma Kodu</span><code>{{ firma.firma_kodu }}</code></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Tip</span><span>{{ firma.tip.value }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Ad</span><span style="font-weight:500">{{ firma.ad }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Vergi No</span><span>{{ firma.vergi_no or '—' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Şehir</span><span>{{ firma.sehir or '—' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">E-posta</span><span>{{ firma.email or '—' }}</span></div>
+          {% if firma.parent %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Bağlı Merkez</span><span style="color:var(--blue)">{{ firma.parent.ad }} ({{ firma.parent.firma_kodu }})</span></div>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between"><span><i class="bi bi-rulers me-2"></i>Özel Birimler</span><button class="btn-tw" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalBirim">+ Birim Ekle</button></div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Ad</th><th>Kısaltma</th><th>kg Karşılığı</th><th>Adet Karşılığı</th></tr></thead>
+          <tbody>
+            {% for b in birimler %}
+            <tr><td class="ps-3" style="font-weight:500">{{ b.ad }}</td><td><code>{{ b.kisaltma or '—' }}</code></td><td>{{ b.kg_karsiligi or '—' }}</td><td>{{ b.adet_karsiligi or '—' }}</td></tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">Özel birim tanımlanmamış</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalBirim" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Özel Birim Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/firma/ayarlar/birim-ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row g-2">
+        <div class="col-8"><label class="form-label">Birim Adı * <small style="color:var(--muted)">(tepsi, dilim, porsiyon...)</small></label><input type="text" name="ad" class="form-control" required></div>
+        <div class="col-4"><label class="form-label">Kısaltma</label><input type="text" name="kisaltma" class="form-control" placeholder="tps"></div>
+      </div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">kg Karşılığı <small style="color:var(--muted)">(1 tepsi = ?kg)</small></label><input type="number" name="kg_karsiligi" class="form-control" step="0.0001"></div>
+        <div class="col-6"><label class="form-label">Adet Karşılığı <small style="color:var(--muted)">(1 tepsi = ?adet)</small></label><input type="number" name="adet_karsiligi" class="form-control" step="0.01"></div>
+      </div>
+      <div><label class="form-label">Açıklama</label><input type="text" name="aciklama" class="form-control"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

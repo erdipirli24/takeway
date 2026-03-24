@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Kalibrasyon Takibi{% endblock %}
+{% block page_title %}Ekipman Kalibrasyon Takibi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/analiz/">Analiz</a> / Kalibrasyon{% endblock %}
+{% block topbar_actions %}<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalEkle"><i class="bi bi-plus-lg me-1"></i> Kalibrasyon Ekle</button>{% endblock %}
+{% block content %}
+{% set yakinda = kayitlar|selectattr('gecerlilik_bitis')|list|selectattr('durum.value','eq','gecerli')|list %}
+{% if yakinda|selectattr('gecerlilik_bitis')|list %}
+<div class="alert-tw alert-warn mb-3"><i class="bi bi-alarm"></i> Geçerlilik süresi yakında dolacak kalibrasyon kayıtları var.</div>
+{% endif %}
+<div class="card">
+  <div class="card-header"><i class="bi bi-rulers me-2"></i>Kalibrasyon Kayıtları</div>
+  <div class="card-body p-0">
+    {% if kayitlar %}
+    <table class="table mb-0">
+      <thead><tr>
+        <th class="ps-3">Makine</th><th>Belge No</th><th>Yapan Kurum</th>
+        <th>Tarih</th><th>Geçerlilik Bitişi</th><th>Kalan</th><th>Durum</th>
+      </tr></thead>
+      <tbody>
+        {% for k in kayitlar %}
+        {% set kalan = (k.gecerlilik_bitis - now).days %}
+        <tr>
+          <td class="ps-3" style="font-weight:500">{{ k.makine.ad if k.makine else '—' }}</td>
+          <td><code style="font-size:11px">{{ k.belge_no or '—' }}</code></td>
+          <td style="font-size:12.5px">{{ k.yapan_kurum or '—' }}</td>
+          <td style="font-size:12px;color:var(--muted)">{{ k.tarih.strftime('%d.%m.%Y') }}</td>
+          <td style="font-weight:600;color:{% if kalan < 0 %}var(--red){% elif kalan < 30 %}var(--orange){% else %}var(--text){% endif %}">
+            {{ k.gecerlilik_bitis.strftime('%d.%m.%Y') }}
+          </td>
+          <td style="font-family:'JetBrains Mono',monospace;color:{% if kalan < 0 %}var(--red){% elif kalan < 30 %}var(--orange){% else %}var(--green){% endif %}">
+            {% if kalan < 0 %}{{ kalan|abs }} gün önce doldu{% else %}{{ kalan }} gün{% endif %}
+          </td>
+          <td><span class="badge-tw {% if k.durum.value=='gecerli' %}b-onaylı{% elif k.durum.value=='suresi_dolmus' %}b-karantina{% else %}b-beklemede{% endif %}">{{ k.durum.value }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)">Kalibrasyon kaydı yok</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="modalEkle" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Kalibrasyon Kaydı</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/analiz/kalibrasyon/ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Makine *</label><select name="makine_id" class="form-select" required><option value="">— Seçiniz —</option>{% for m in makineler %}<option value="{{ m.id }}">{{ m.ad }}{% if m.tip %} ({{ m.tip }}){% endif %}</option>{% endfor %}</select></div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Kalibrasyon Tarihi *</label><input type="date" name="tarih" class="form-control" required></div>
+        <div class="col-6"><label class="form-label">Geçerlilik Bitişi *</label><input type="date" name="gecerlilik_bitis" class="form-control" required></div>
+      </div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Belge No</label><input type="text" name="belge_no" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Kalibrasyon No</label><input type="text" name="kalibrasyon_no" class="form-control"></div>
+      </div>
+      <div><label class="form-label">Yapan Kurum</label><input type="text" name="yapan_kurum" class="form-control"></div>
+      <div><label class="form-label">Sonuç</label><input type="text" name="sonuc" class="form-control" placeholder="Uygun, Taşlama yapıldı..."></div>
+      <div><label class="form-label">Maliyet (₺)</label><input type="number" name="maliyet" class="form-control" step="0.01"></div>
+      <div><label class="form-label">Notlar</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

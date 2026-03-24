@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>Parti · TraceWay</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{--bg:#0d1117;--surf:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--green:#2ea043;--blue:#58a6ff;--red:#f85149;--orange:#e3b341}
+    *{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;min-height:100vh}
+    .topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;gap:12px;align-items:center;position:sticky;top:0}
+    .back{color:var(--muted);font-size:22px;text-decoration:none}
+    h2{font-size:15px;font-weight:700}
+    .content{padding:16px;display:flex;flex-direction:column;gap:12px}
+    .card{background:var(--surf);border:1px solid var(--border);border-radius:10px}
+    .row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)}
+    .row:last-child{border-bottom:none}
+    .label{font-size:12px;color:var(--muted)}
+    .val{font-size:13.5px;font-weight:500}
+    .qr-img{border:3px solid var(--border);border-radius:8px;background:#fff;padding:4px;display:block;margin:0 auto}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/mobil/qr" class="back"><i class="bi bi-arrow-left"></i></a>
+  <h2>Ürün Partisi</h2>
+</div>
+<div class="content">
+  {% if parti.qr_data %}
+  <div class="card" style="padding:16px;text-align:center">
+    <img src="data:image/png;base64,{{ parti.qr_data }}" class="qr-img" style="width:140px;height:140px">
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="row"><span class="label">Parti No</span><code style="color:var(--green)">{{ parti.parti_no }}</code></div>
+    <div class="row"><span class="label">Ürün</span><span class="val">{{ parti.urun.ad if parti.urun else '—' }}</span></div>
+    <div class="row"><span class="label">Miktar</span><span class="val" style="color:var(--green);font-size:18px;font-weight:700">{{ parti.uretim_miktari }} {{ parti.birim }}</span></div>
+    <div class="row"><span class="label">Kalan</span><span class="val">{{ parti.kalan_miktar }} {{ parti.birim }}</span></div>
+    <div class="row"><span class="label">Üretim Tarihi</span><span class="val">{{ parti.uretim_tarihi.strftime('%d.%m.%Y') if parti.uretim_tarihi else '—' }}</span></div>
+    <div class="row"><span class="label">Son Kullanma</span>
+      {% if parti.son_kullanma %}
+      {% set gun = (parti.son_kullanma - now).days %}
+      <span class="val" style="color:{% if gun < 0 %}var(--red){% elif gun < 14 %}var(--orange){% else %}var(--text){% endif %}">{{ parti.son_kullanma.strftime('%d.%m.%Y') }}</span>
+      {% else %}<span class="val">—</span>{% endif %}
+    </div>
+  </div>
+
+  <a href="/uretim/parti/{{ parti.id }}" style="display:block;text-align:center;padding:12px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);border-radius:8px;color:var(--blue);font-size:13px;text-decoration:none">
+    <i class="bi bi-diagram-3 me-1"></i> İzlenebilirlik Zinciri
+  </a>
+</div>
+</body>
+</html>

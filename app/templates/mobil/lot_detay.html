@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>Lot · TraceWay</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{--bg:#0d1117;--surf:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--green:#2ea043;--blue:#58a6ff;--red:#f85149;--orange:#e3b341}
+    *{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;min-height:100vh}
+    .topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;gap:12px;align-items:center;position:sticky;top:0}
+    .back{color:var(--muted);font-size:22px;text-decoration:none}
+    h2{font-size:15px;font-weight:700}
+    .content{padding:16px;display:flex;flex-direction:column;gap:12px}
+    .card{background:var(--surf);border:1px solid var(--border);border-radius:10px}
+    .row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)}
+    .row:last-child{border-bottom:none}
+    .label{font-size:12px;color:var(--muted)}
+    .val{font-size:13.5px;font-weight:500}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
+    .b-beklemede{background:rgba(227,179,65,.2);color:var(--orange)}
+    .b-onaylı{background:rgba(46,160,67,.2);color:var(--green)}
+    .b-karantina{background:rgba(248,81,73,.2);color:var(--red)}
+    .fifo{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:13px;font-weight:700}
+    .qr-img{border:3px solid var(--border);border-radius:8px;background:#fff;padding:4px;display:block;margin:0 auto}
+    .alerjen{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:rgba(248,81,73,.15);color:var(--red);border:1px solid rgba(248,81,73,.3);margin:2px}
+    .warn-box{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--red)}
+    .numune-box{background:rgba(227,179,65,.1);border:1px solid rgba(227,179,65,.3);border-radius:8px;padding:12px 14px;font-size:13px}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/mobil/qr" class="back"><i class="bi bi-arrow-left"></i></a>
+  <h2>Lot Detayı</h2>
+</div>
+<div class="content">
+
+  {% set skt_gun = (lot.son_kullanma - now).days if lot.son_kullanma else 999 %}
+  {% if skt_gun < 0 %}
+  <div class="warn-box"><i class="bi bi-exclamation-octagon-fill me-2"></i>Son kullanma tarihi {{ skt_gun|abs }} gün önce doldu!</div>
+  {% elif skt_gun < 7 %}
+  <div class="warn-box"><i class="bi bi-alarm me-2"></i>Son kullanma tarihine {{ skt_gun }} gün kaldı!</div>
+  {% endif %}
+
+  {% if numune %}
+  <div class="numune-box">
+    <i class="bi bi-eyedropper me-2" style="color:var(--orange)"></i>
+    <strong>Numune Onayı Bekleniyor</strong> — Bu lot henüz kullanıma açılmadı.<br>
+    <small>Numune No: <code>{{ numune.numune_no }}</code></small>
+  </div>
+  {% endif %}
+
+  {% if lot.qr_data %}
+  <div class="card" style="padding:16px;text-align:center">
+    <img src="data:image/png;base64,{{ lot.qr_data }}" class="qr-img" style="width:140px;height:140px">
+    {% if fifo_konum %}
+    <div style="margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px">
+      <span class="fifo">{{ fifo_konum }}</span>
+      <span style="font-size:12px;color:var(--muted)">FIFO sırası / {{ fifo_toplam }}</span>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="row"><span class="label">İç Parti No</span><code style="color:var(--green);font-size:13px">{{ lot.ic_parti_no or '—' }}</code></div>
+    <div class="row"><span class="label">Hammadde</span><span class="val">{{ lot.hammadde.ad }}</span></div>
+    <div class="row"><span class="label">Tedarikçi Lot</span><code>{{ lot.lot_no }}</code></div>
+    <div class="row"><span class="label">Fatura No</span><code>{{ lot.fatura_no or '—' }}</code></div>
+    <div class="row"><span class="label">Tedarikçi</span><span class="val">{{ lot.tedarikci.ad if lot.tedarikci else '—' }}</span></div>
+    <div class="row"><span class="label">Giriş Miktarı</span><span class="val">{{ lot.giris_miktar }} {{ lot.hammadde.birim }}</span></div>
+    <div class="row"><span class="label">Kalan Miktar</span><span class="val" style="color:var(--green);font-weight:700">{{ lot.kalan_miktar }} {{ lot.hammadde.birim }}</span></div>
+    <div class="row"><span class="label">Son Kullanma</span><span class="val" style="color:{% if skt_gun < 7 %}var(--red){% elif skt_gun < 30 %}var(--orange){% else %}var(--text){% endif %}">{{ lot.son_kullanma.strftime('%d.%m.%Y') if lot.son_kullanma else '—' }}</span></div>
+    <div class="row"><span class="label">Depo</span><span class="val">{{ lot.depo.ad if lot.depo else '—' }}{% if lot.depo_konumu %} / {{ lot.depo_konumu }}{% endif %}</span></div>
+    <div class="row"><span class="label">Durum</span><span class="badge b-{{ lot.durum.value }}">{{ lot.durum.value }}</span></div>
+    {% if lot.hammadde.alerjenler %}
+    <div class="row" style="flex-direction:column;align-items:flex-start;gap:6px">
+      <span class="label">Allerjenler</span>
+      <div>{% for a in lot.hammadde.alerjen_listesi %}<span class="alerjen">{{ a }}</span>{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <a href="/depo/lot/{{ lot.id }}" style="display:block;text-align:center;padding:12px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);border-radius:8px;color:var(--blue);font-size:13px;text-decoration:none">
+    <i class="bi bi-box-arrow-up-right me-1"></i> Tam Detay (Masaüstü)
+  </a>
+</div>
+</body>
+</html>

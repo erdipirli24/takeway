@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Allerjen Matrisi{% endblock %}
+{% block page_title %}Allerjen Matrisi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/analiz/">Analiz</a> / Allerjen{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header"><i class="bi bi-exclamation-triangle-fill me-2" style="color:var(--red)"></i>Hammadde Allerjen Bilgileri</div>
+      <div class="card-body p-0">
+        <div style="overflow-x:auto">
+          <table class="table mb-0" style="font-size:12px;min-width:800px">
+            <thead>
+              <tr>
+                <th class="ps-3" style="min-width:160px">Hammadde</th>
+                {% for a in ALERJEN_LISTESI %}
+                <th style="text-align:center;writing-mode:vertical-lr;transform:rotate(180deg);height:80px;padding:4px">{{ a }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in hammaddeler %}
+              {% set h_alerjenler = h.alerjen_listesi %}
+              <tr {% if h_alerjenler %}style="background:rgba(248,81,73,.03)"{% endif %}>
+                <td class="ps-3" style="font-weight:{% if h_alerjenler %}600{% else %}400{% endif %}">{{ h.ad }}</td>
+                {% for a in ALERJEN_LISTESI %}
+                <td style="text-align:center">
+                  {% if a in h_alerjenler %}
+                  <span style="color:var(--red);font-size:14px">⚠</span>
+                  {% else %}
+                  <span style="color:var(--border);font-size:12px">·</span>
+                  {% endif %}
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-journal-text me-2" style="color:var(--purple)"></i>Reçete Allerjen Özeti</div>
+      <div class="card-body p-0">
+        {% if receteler %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Reçete</th><th>İçerdiği Allerjenler</th></tr></thead>
+          <tbody>
+            {% for r in receteler %}
+            <tr>
+              <td class="ps-3" style="font-weight:500">{{ r.ad }}<br><span style="font-size:11px;color:var(--muted)">v{{ r.versiyon }}</span></td>
+              <td>
+                {% if recete_alerjenler[r.id] %}
+                {% for a in recete_alerjenler[r.id] %}<span class="alerjen-tag">{{ a }}</span>{% endfor %}
+                {% else %}
+                <span style="font-size:12px;color:var(--green)">✓ Allerjen içermiyor</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:24px;text-align:center;color:var(--muted)">Onaylı reçete yok</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-box-seam me-2" style="color:var(--green)"></i>Ürün Allerjen Özeti</div>
+      <div class="card-body p-0">
+        {% if urunler %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Ürün</th><th>İçerdiği Allerjenler</th></tr></thead>
+          <tbody>
+            {% for u in urunler %}
+            <tr>
+              <td class="ps-3" style="font-weight:500">{{ u.ad }}</td>
+              <td>
+                {% if urun_alerjenler[u.id] %}
+                {% for a in urun_alerjenler[u.id] %}<span class="alerjen-tag">{{ a }}</span>{% endfor %}
+                {% else %}
+                <span style="font-size:12px;color:var(--green)">✓ Allerjen içermiyor</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:24px;text-align:center;color:var(--muted)">Ürün tanımı yok</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

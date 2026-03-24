@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ makine.ad }}{% endblock %}
+{% block page_title %}{{ makine.ad }}{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/makine/">Makineler</a> / {{ makine.ad }}{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:18px;font-weight:700">{{ makine.ad }}</div>
+          <span class="badge-tw {% if makine.durum.value=='aktif' %}b-onaylı{% elif makine.durum.value=='arizali' %}b-karantina{% else %}b-beklemede{% endif %}" style="font-size:13px;padding:5px 12px">{{ makine.durum.value.upper() }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+          {% for label, val in [('Kod', makine.kod),('Tip', makine.tip),('Marka', makine.marka),('Model', makine.model),('Seri No', makine.seri_no),('Kapasite', makine.kapasite)] %}
+          {% if val %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">{{ label }}</span><span>{{ val }}</span></div>{% endif %}
+          {% endfor %}
+          {% if makine.son_bakim %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Son Bakım</span><span>{{ makine.son_bakim.strftime('%d.%m.%Y') }}</span></div>{% endif %}
+          {% if makine.sonraki_bakim %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Sonraki Bakım</span><span style="font-weight:600;color:var(--orange)">{{ makine.sonraki_bakim.strftime('%d.%m.%Y') }}</span></div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header">Durum Güncelle</div>
+      <div class="card-body">
+        <form method="POST" action="/makine/{{ makine.id }}/durum">
+          <div style="margin-bottom:10px"><label class="form-label">Durum</label>
+            <select name="durum" class="form-select">
+              {% for d in MacineDurum %}<option value="{{ d.value }}" {% if d==makine.durum %}selected{% endif %}>{{ d.value }}</option>{% endfor %}
+            </select>
+          </div>
+          <div style="margin-bottom:10px"><label class="form-label">Not</label><textarea name="bakim_notu" class="form-control" rows="2"></textarea></div>
+          <button type="submit" class="btn-tw w-100">Güncelle</button>
+        </form>
+      </div>
+    </div>
+    {% if aktif_uretimler %}
+    <div class="card">
+      <div class="card-header" style="color:var(--blue)"><i class="bi bi-cpu me-2"></i>Aktif Üretimler</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <tbody>
+            {% for e in aktif_uretimler %}
+            <tr onclick="location.href='/uretim/{{ e.id }}'" style="cursor:pointer">
+              <td class="ps-3"><code>{{ e.emri_no }}</code></td>
+              <td>{{ e.urun_adi }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-tools me-2"></i>Bakım & Arıza Geçmişi</span>
+        <button class="btn-tw" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalBakim">+ Bakım Ekle</button>
+      </div>
+      <div class="card-body p-0">
+        {% if bakim_kayitlari %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Tip</th><th>Açıklama</th><th>Yapan</th><th>Maliyet</th><th>Tarih</th></tr></thead>
+          <tbody>
+            {% for b in bakim_kayitlari %}
+            <tr>
+              <td class="ps-3"><span class="badge-tw {% if b.tip=='Arıza' %}b-karantina{% elif b.tip=='Bakım' %}b-beklemede{% else %}b-onaylı{% endif %}">{{ b.tip }}</span></td>
+              <td style="font-size:12.5px">{{ b.aciklama or '—' }}</td>
+              <td style="font-size:12px;color:var(--muted)">{{ b.yapan or '—' }}</td>
+              <td style="font-size:12px">{{ b.maliyet ~ ' ₺' if b.maliyet else '—' }}</td>
+              <td style="font-size:11px;color:var(--muted)">{{ b.tarih.strftime('%d.%m.%Y') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:32px;text-align:center;color:var(--muted)">Bakım kaydı yok</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalBakim" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Bakım / Arıza Kaydı</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/makine/{{ makine.id }}/bakim-ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Tip *</label>
+        <select name="tip" class="form-select"><option value="Periyodik">Periyodik Bakım</option><option value="Arıza">Arıza Kaydı</option><option value="Bakım">Onarım</option><option value="Kalibrasyon">Kalibrasyon</option></select>
+      </div>
+      <div><label class="form-label">Açıklama</label><textarea name="aciklama" class="form-control" rows="3" required></textarea></div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Yapan / Firma</label><input type="text" name="yapan" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Maliyet (₺)</label><input type="number" name="maliyet" class="form-control" step="0.01"></div>
+      </div>
+      <div><label class="form-label">Sonraki Bakım Tarihi</label><input type="date" name="sonraki_bakim" class="form-control"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

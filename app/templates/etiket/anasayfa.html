@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Etiket Yönetimi{% endblock %}
+{% block page_title %}Etiket Yönetimi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Etiketler{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="alert-tw alert-info"><i class="bi bi-info-circle"></i> Etiket sayfaları direkt tarayıcıdan yazdırılır. Lot detay, parti detay veya numune sayfalarından "Etiket Bas" butonunu kullanın.</div>
+  </div>
+</div>
+<div class="row g-3">
+  {% for tip, ikon, baslik, aciklama, href in [
+    ('lot','bi-layers-half','Hammadde Lot Etiketi','Depo rafına yapıştırılacak etiket','/depo/stok'),
+    ('urun_parti','bi-box-seam','Ürün Parti Etiketi','Ürün ambalajına yapıştırılacak etiket','/uretim/'),
+    ('numune','bi-eyedropper','Numune Etiketi','Lab'a gönderilecek kaba yapıştırılacak etiket','/depo/numune'),
+    ('sevkiyat','bi-truck','Sevkiyat İrsaliyesi','Sevkiyat belgesi ve QR kodu','/satis/sevkiyat'),
+  ] %}
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body" style="padding:20px;text-align:center">
+        <i class="bi {{ ikon }}" style="font-size:32px;color:var(--blue);margin-bottom:10px;display:block"></i>
+        <div style="font-size:14px;font-weight:600;margin-bottom:5px">{{ baslik }}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">{{ aciklama }}</div>
+        <a href="{{ href }}" class="btn-ghost" style="font-size:12px;display:block;text-align:center">İlgili Sayfaya Git →</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

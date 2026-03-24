@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Üretim Emirleri{% endblock %}
+{% block page_title %}Üretim Emirleri{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Üretim{% endblock %}
+{% block topbar_actions %}
+<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalEkle"><i class="bi bi-plus-lg me-1"></i> Yeni Emir</button>
+<a href="/uretim/yari-mamul/kontrol" class="btn-ghost"><i class="bi bi-layers me-1"></i> Yarı Mamul</a>
+{% endblock %}
+{% block content %}
+<div class="card mb-3"><div class="card-body" style="padding:12px 16px">
+  <form method="GET" class="d-flex gap-2 flex-wrap">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Emir no veya ürün ara..." style="max-width:220px">
+    <select name="durum" class="form-select" style="max-width:160px"><option value="">Tüm Durumlar</option>{% for d in UretimDurum %}<option value="{{ d.value }}" {% if filtre_durum==d.value %}selected{% endif %}>{{ d.value }}</option>{% endfor %}</select>
+    <button type="submit" class="btn-ghost"><i class="bi bi-funnel"></i></button>
+    <a href="/uretim/" class="btn-ghost">Temizle</a>
+  </form>
+</div></div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between"><span><i class="bi bi-cpu me-2"></i>Üretim Emirleri</span><span style="font-size:12px;color:var(--muted)">{{ emirler|length }} kayıt</span></div>
+  <div class="card-body p-0">
+    {% if emirler %}
+    <table class="table table-hover mb-0">
+      <thead><tr><th class="ps-3">Emir No</th><th>Ürün</th><th>Hedef</th><th>Üretilen</th><th>Öncelik</th><th>Durum</th><th>Tarih</th></tr></thead>
+      <tbody>
+        {% for e in emirler %}
+        <tr onclick="location.href='/uretim/{{ e.id }}'" style="cursor:pointer">
+          <td class="ps-3"><code style="color:var(--blue)">{{ e.emri_no }}</code></td>
+          <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.urun_adi }}</td>
+          <td style="font-family:'JetBrains Mono',monospace">{{ e.hedef_miktar }} {{ e.hedef_birim }}</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:{% if e.uretilen_miktar >= e.hedef_miktar %}var(--green){% else %}var(--muted){% endif %}">{{ e.uretilen_miktar or 0 }}</td>
+          <td><span style="font-size:12px;color:{% if e.oncelik==1 %}var(--red){% elif e.oncelik==3 %}var(--muted){% else %}var(--text){% endif %}">{% if e.oncelik==1 %}🔴 Yüksek{% elif e.oncelik==3 %}🟢 Düşük{% else %}🟡 Normal{% endif %}</span></td>
+          <td><span class="badge-tw b-{{ e.durum.value }}">{{ e.durum.value }}</span></td>
+          <td style="font-size:11px;color:var(--muted)">{{ e.created_at.strftime('%d.%m.%Y') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)"><i class="bi bi-cpu" style="font-size:40px;opacity:.3"></i><div style="margin-top:12px">Üretim emri yok</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="modalEkle" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Üretim Emri</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/uretim/ekle">
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">Bağlı Reçete</label>
+          <select name="recete_id" class="form-select" id="selRecete" onchange="receteSecildi(this)"><option value="">— Reçete Seçiniz —</option>{% for r in receteler %}<option value="{{ r.id }}" data-urun="{{ r.urun.ad if r.urun else '' }}" data-birim="{{ r.baz_birim }}">{{ r.ad }} (v{{ r.versiyon }})</option>{% endfor %}</select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Ürün Adı *</label><input type="text" name="urun_adi" class="form-control" id="inpUrunAdi" required placeholder="Elfiga Mantı 500g"></div>
+        <div class="col-md-4"><label class="form-label">Hedef Miktar *</label><input type="number" name="hedef_miktar" class="form-control" step="0.001" min="0.001" required></div>
+        <div class="col-md-3"><label class="form-label">Birim</label>
+          <select name="hedef_birim" class="form-select" id="selBirim">{% for b in birimler %}<option value="{{ b }}">{{ b }}</option>{% endfor %}</select>
+        </div>
+        <div class="col-md-3"><label class="form-label">Öncelik</label>
+          <select name="oncelik" class="form-select"><option value="1">🔴 Yüksek</option><option value="2" selected>🟡 Normal</option><option value="3">🟢 Düşük</option></select>
+        </div>
+        <div class="col-md-2"><label class="form-label">Başlangıç</label><input type="date" name="baslangic" class="form-control"></div>
+        <div class="col-12"><label class="form-label">Notlar</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Emri Oluştur</button></div>
+  </form>
+</div></div></div>
+<script>
+function receteSecildi(sel){
+  const opt = sel.options[sel.selectedIndex];
+  if(opt.value){ document.getElementById('inpUrunAdi').value = opt.dataset.urun || ''; }
+}
+</script>
+{% endblock %}

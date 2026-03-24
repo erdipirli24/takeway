@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ recete.ad }}{% endblock %}
+{% block page_title %}Reçete Detayı{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/recete/">Reçeteler</a> / {{ recete.ad }}{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div style="font-size:16px;font-weight:700;margin-bottom:4px">{{ recete.ad }}</div>
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <span class="badge-tw {% if recete.tip.value=='hammadde' %}b-onaylı{% elif recete.tip.value=='karisim' %}b-beklemede{% else %}b-transfer{% endif %}">{{ recete.tip.value }}</span>
+          {% if recete.onaylandi %}<span class="badge-tw b-onaylı">✓ Onaylı</span>{% else %}<span class="badge-tw b-beklemede">Onay Bekliyor</span>{% endif %}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Baz Birim</span><strong>{{ recete.baz_miktar }} {{ recete.baz_birim }}</strong></div>
+          {% if recete.baz_kg_karsiligi %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">kg Karşılığı</span><span>{{ recete.baz_kg_karsiligi }} kg</span></div>{% endif %}
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Versiyon</span><code>v{{ recete.versiyon }}</code></div>
+          {% if recete.urun %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Ürün</span><span>{{ recete.urun.ad }}</span></div>{% endif %}
+          {% if recete.onaylayan_id %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Onay Tarihi</span><span>{{ recete.onay_tarihi.strftime('%d.%m.%Y') if recete.onay_tarihi else '—' }}</span></div>{% endif %}
+        </div>
+        {% if recete.notlar %}<div class="divider"></div><div style="font-size:12.5px;color:var(--muted)">{{ recete.notlar }}</div>{% endif %}
+        {% if can_edit and not recete.onaylandi %}
+        <div class="divider"></div>
+        <form method="POST" action="/recete/{{ recete.id }}/onayla">
+          <button type="submit" class="btn-tw w-100"><i class="bi bi-check-circle me-1"></i> Reçeteyi Onayla</button>
+        </form>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center">Onaylandıktan sonra değiştirilemez</div>
+        {% endif %}
+        {% if can_edit and recete.onaylandi %}
+        <div class="divider"></div>
+        <a href="/recete/yeni" class="btn-ghost w-100" style="text-align:center;display:block;font-size:12px"><i class="bi bi-plus me-1"></i> Yeni Versiyon Oluştur</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if versiyonlar|length > 1 %}
+    <div class="card">
+      <div class="card-header">Versiyon Geçmişi</div>
+      <div class="card-body p-0">
+        {% for v in versiyonlar %}
+        <a href="/recete/{{ v.id }}" style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);{% if v.id==recete.id %}background:rgba(46,160,67,.08){% endif %}">
+          <span><code>v{{ v.versiyon }}</code> {% if not v.aktif %}<span style="font-size:10px;color:var(--muted)">arşiv</span>{% endif %}</span>
+          <span style="font-size:11px;color:var(--muted)">{{ v.created_at.strftime('%d.%m.%Y') }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-list-ul me-2"></i>Reçete Kalemleri <small style="color:var(--muted)">({{ recete.baz_miktar }} {{ recete.baz_birim }} baz)</small></div>
+      <div class="card-body p-0">
+        {% if recete.kalemler %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">#</th><th>Hammadde / Ara Ürün</th><th>Miktar</th><th>Birim</th><th>Tolerans</th><th>Zorunlu</th></tr></thead>
+          <tbody>
+            {% for k in recete.kalemler %}
+            <tr>
+              <td class="ps-3" style="color:var(--muted)">{{ k.sira }}</td>
+              <td style="font-weight:500">
+                {% if k.hammadde %}
+                  {{ k.hammadde.ad }}
+                  {% if k.hammadde.alerjenler %}{% for a in k.hammadde.alerjen_listesi %}<span class="alerjen-tag">{{ a }}</span>{% endfor %}{% endif %}
+                {% elif k.ara_urun_recete %}
+                  <span style="color:var(--purple)"><i class="bi bi-layers me-1"></i>{{ k.ara_urun_recete.ad }}</span> <small style="color:var(--muted)">(ara ürün)</small>
+                {% endif %}
+                {% if k.notlar %}<div style="font-size:11px;color:var(--muted)">{{ k.notlar }}</div>{% endif %}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ k.miktar }}</td>
+              <td>{{ k.birim }}</td>
+              <td style="font-size:12px;color:var(--muted)">±{{ k.tolerans_yuzde }}%</td>
+              <td>{% if k.zorunlu %}<span style="color:var(--green)">✓</span>{% else %}<span style="color:var(--muted)">—</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:32px;text-align:center;color:var(--muted)">Kalem eklenmemiş</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Performans Dashboard{% endblock %}
+{% block page_title %}Performans Dashboard{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/sistem/ayarlar">Sistem</a> / Performans{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-2">
+    <div class="kpi"><div class="kpi-label">30 Gün Üretim</div><div class="kpi-val" style="color:var(--blue)">{{ toplam_uretim_30 }}</div><div class="kpi-sub">Toplam emir</div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="kpi"><div class="kpi-label">Tamamlanan</div><div class="kpi-val" style="color:var(--green)">{{ tamamlanan_30 }}</div><div class="kpi-sub">Son 30 gün</div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="kpi" style="border-color:{% if uyum_orani >= 95 %}var(--green){% elif uyum_orani >= 80 %}var(--orange){% else %}var(--red){% endif %}">
+      <div class="kpi-label">HACCP Uyumu</div>
+      <div class="kpi-val" style="color:{% if uyum_orani >= 95 %}var(--green){% elif uyum_orani >= 80 %}var(--orange){% else %}var(--red){% endif %}">%{{ uyum_orani }}</div>
+      <div class="kpi-sub">{{ ccp_toplam }} ölçüm</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="kpi"><div class="kpi-label">Lot Girişi</div><div class="kpi-val" style="color:var(--blue)">{{ lot_giris_30 }}</div><div class="kpi-sub">Son 30 gün</div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="kpi" {% if bekleyen_numune %}style="border-color:var(--orange)"{% endif %}>
+      <div class="kpi-label">Bekleyen Numune</div>
+      <div class="kpi-val" style="color:{{ 'var(--orange)' if bekleyen_numune else 'var(--muted)' }}">{{ bekleyen_numune }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="kpi" {% if acik_sikayet %}style="border-color:var(--orange)"{% endif %}>
+      <div class="kpi-label">Açık Şikayet</div>
+      <div class="kpi-val" style="color:{{ 'var(--orange)' if acik_sikayet else 'var(--muted)' }}">{{ acik_sikayet }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Son 7 Gün Üretim Emri Trendi</div>
+      <div class="card-body" style="padding:20px">
+        <div style="display:flex;align-items:flex-end;gap:8px;height:120px">
+          {% set max_sayi = gunluk_trend|map(attribute='sayi')|max or 1 %}
+          {% for g in gunluk_trend %}
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="font-size:11px;font-weight:600;color:var(--text)">{{ g.sayi }}</div>
+            <div style="width:100%;background:var(--blue);border-radius:3px 3px 0 0;height:{{ [((g.sayi / max_sayi) * 100)|int, 4]|max }}px;opacity:.8"></div>
+            <div style="font-size:10px;color:var(--muted)">{{ g.tarih }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-activity me-2" style="color:var(--green)"></i>Sistem Durumu</div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:12px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span>HACCP Uyumu</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:80px;height:6px;background:var(--surf2);border-radius:3px"><div style="height:100%;width:{{ uyum_orani }}%;background:{% if uyum_orani >= 95 %}var(--green){% elif uyum_orani >= 80 %}var(--orange){% else %}var(--red){% endif %};border-radius:3px"></div></div>
+              <span style="font-weight:600;color:{% if uyum_orani >= 95 %}var(--green){% else %}var(--orange){% endif %}">%{{ uyum_orani }}</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span>Karantina Oranı</span>
+            <span style="font-weight:600;color:{% if lot_karantina_30 %}var(--red){% else %}var(--green){% endif %}">
+              {{ lot_karantina_30 }} / {{ lot_giris_30 }} lot
+            </span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span>Tamamlanma Oranı</span>
+            <span style="font-weight:600;color:var(--green)">
+              {% if toplam_uretim_30 %}%{{ ((tamamlanan_30 / toplam_uretim_30) * 100)|int }}{% else %}—{% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="font-size:12px;color:var(--muted)">Son güncelleme: {{ now.strftime('%d.%m.%Y %H:%M') }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

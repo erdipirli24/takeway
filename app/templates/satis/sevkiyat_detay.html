@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ sv.sevk_no }}{% endblock %}
+{% block page_title %}Sevkiyat Detayı{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/satis/sevkiyat">Sevkiyat</a> / {{ sv.sevk_no }}{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        {% if sv.qr_data %}
+        <div style="text-align:center;margin-bottom:14px">
+          <div class="qr-box"><img src="data:image/png;base64,{{ sv.qr_data }}" style="width:140px;height:140px;display:block"></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px">{{ sv.sevk_no }}</div>
+        </div>
+        {% endif %}
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Sevk No</span><code>{{ sv.sevk_no }}</code></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Müşteri</span><span>{{ sv.siparis.musteri.ad if sv.siparis and sv.siparis.musteri else '—' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Nakliyeci</span><span>{{ sv.nakliyeci or '—' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Plaka</span><code>{{ sv.plaka or '—' }}</code></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Şoför</span><span>{{ sv.sofor or '—' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Sevk Tarihi</span><span>{{ sv.sevk_tarihi.strftime('%d.%m.%Y') if sv.sevk_tarihi else '—' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Teslim</span>{% if sv.gercek_teslim %}<span style="color:var(--green)">{{ sv.gercek_teslim.strftime('%d.%m.%Y') }}</span>{% else %}<span style="color:var(--orange)">Bekleniyor</span>{% endif %}</div>
+        </div>
+        {% if not sv.gercek_teslim %}
+        <div class="divider"></div>
+        <form method="POST" action="/satis/sevkiyat/{{ sv.id }}/teslim">
+          <button type="submit" class="btn-tw w-100"><i class="bi bi-check-circle me-1"></i> Teslim Edildi</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-boxes me-2"></i>Sevkiyat Kalemleri</span>
+        <button class="btn-ghost" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalKalem">+ Kalem Ekle</button>
+      </div>
+      <div class="card-body p-0">
+        {% if sv.kalemler %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Ürün Partisi</th><th>Ürün</th><th>Miktar</th><th>Birim</th></tr></thead>
+          <tbody>
+            {% for k in sv.kalemler %}
+            <tr>
+              <td class="ps-3"><a href="/uretim/parti/{{ k.urun_parti_id }}" style="color:var(--green)"><code>{{ k.urun_parti.parti_no if k.urun_parti else '—' }}</code></a></td>
+              <td>{{ k.urun_parti.urun.ad if k.urun_parti and k.urun_parti.urun else '—' }}</td>
+              <td style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ k.miktar }}</td>
+              <td>{{ k.birim or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:24px;text-align:center;color:var(--muted)">Kalem eklenmemiş</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalKalem" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Kalem Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/satis/sevkiyat/{{ sv.id }}/kalem-ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Ürün Partisi *</label><select name="urun_parti_id" class="form-select" required><option value="">— Seçiniz —</option>{% for p in partiler %}<option value="{{ p.id }}">{{ p.parti_no }} — {{ p.urun.ad if p.urun else '' }} ({{ p.kalan_miktar }} {{ p.birim }})</option>{% endfor %}</select></div>
+      <div class="row g-2">
+        <div class="col-7"><label class="form-label">Miktar *</label><input type="number" name="miktar" class="form-control" step="0.001" required></div>
+        <div class="col-5"><label class="form-label">Birim</label><select name="birim" class="form-select"><option>kg</option><option>adet</option><option>paket</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Ekle</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

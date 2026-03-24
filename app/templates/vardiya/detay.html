@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Vardiya {{ vardiya.tarih.strftime('%d.%m.%Y') }}{% endblock %}
+{% block page_title %}Vardiya Detayı{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/vardiya/">Vardiya</a> / {{ vardiya.tarih.strftime('%d.%m.%Y') }}{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:16px;font-weight:700">{{ vardiya.tarih.strftime('%d.%m.%Y') }}</div>
+          {% if vardiya.bitis %}<span class="badge-tw b-tükendi">Kapalı</span>{% else %}<span class="badge-tw b-devam">Aktif</span>{% endif %}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Tip</span><span class="badge-tw b-transfer">{{ vardiya.tip.value }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Sorumlu</span><span>{{ vardiya.sorumlu.ad_soyad if vardiya.sorumlu else '—' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Başlangıç</span><span>{{ vardiya.baslangic.strftime('%H:%M') if vardiya.baslangic else '—' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Bitiş</span><span>{{ vardiya.bitis.strftime('%H:%M') if vardiya.bitis else '—' }}</span></div>
+        </div>
+        {% if not vardiya.bitis %}
+        <div class="divider"></div>
+        <form method="POST" action="/vardiya/{{ vardiya.id }}/kapat">
+          <button type="submit" class="btn-red w-100" onclick="return confirm('Vardiya kapatılsın mı?')">Vardiyayı Kapat</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-people me-2"></i>Vardiya Personeli ({{ vardiya.personel|length }})</span>
+        <button class="btn-ghost" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalPersonel">+ Ekle</button>
+      </div>
+      <div class="card-body p-0">
+        {% if vardiya.personel %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Ad Soyad</th><th>Görev</th><th>Giriş</th></tr></thead>
+          <tbody>
+            {% for p in vardiya.personel %}
+            <tr>
+              <td class="ps-3">{{ p.kullanici.ad_soyad if p.kullanici else '—' }}</td>
+              <td style="font-size:12px;color:var(--muted)">{{ p.gorev or '—' }}</td>
+              <td style="font-size:12px;color:var(--muted)">{{ p.giris.strftime('%H:%M') if p.giris else '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:20px;text-align:center;color:var(--muted);font-size:12.5px">Personel atanmamış</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-cpu me-2"></i>Bu Vardiyada Üretimler ({{ vardiya.uretim_emirleri_rel|length }})</span>
+        <button class="btn-ghost" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalUretim">+ Bağla</button>
+      </div>
+      <div class="card-body p-0">
+        {% if vardiya.uretim_emirleri_rel %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Emir No</th><th>Ürün</th><th>Durum</th></tr></thead>
+          <tbody>
+            {% for vu in vardiya.uretim_emirleri_rel %}
+            <tr onclick="location.href='/uretim/{{ vu.uretim_emri_id }}'" style="cursor:pointer">
+              <td class="ps-3"><code>{{ vu.uretim_emri.emri_no if vu.uretim_emri else vu.uretim_emri_id }}</code></td>
+              <td>{{ vu.uretim_emri.urun_adi if vu.uretim_emri else '—' }}</td>
+              <td>{% if vu.uretim_emri %}<span class="badge-tw b-{{ vu.uretim_emri.durum.value }}">{{ vu.uretim_emri.durum.value }}</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:20px;text-align:center;color:var(--muted);font-size:12.5px">Üretim bağlanmamış</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalPersonel" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Personel Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/vardiya/{{ vardiya.id }}/personel-ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Personel *</label><select name="kullanici_id" class="form-select" required><option value="">— Seçiniz —</option>{% for k in kullanicilar %}<option value="{{ k.id }}">{{ k.ad_soyad }}{% if k.unvan %} ({{ k.unvan }}){% endif %}</option>{% endfor %}</select></div>
+      <div><label class="form-label">Görev</label><input type="text" name="gorev" class="form-control" placeholder="Üretim Operatörü..."></div>
+      <div><label class="form-label">Giriş Saati</label><input type="datetime-local" name="giris" class="form-control"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Ekle</button></div>
+  </form>
+</div></div></div>
+
+<div class="modal fade" id="modalUretim" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Üretim Emri Bağla</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/vardiya/{{ vardiya.id }}/uretim-ekle">
+    <div class="modal-body">
+      <label class="form-label">Üretim Emri *</label>
+      <select name="uretim_emri_id" class="form-select" required><option value="">— Seçiniz —</option>{% for e in aktif_emirler %}<option value="{{ e.id }}">{{ e.emri_no }} — {{ e.urun_adi }}</option>{% endfor %}</select>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Bağla</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

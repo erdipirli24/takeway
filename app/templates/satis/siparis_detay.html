@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ sp.siparis_no }}{% endblock %}
+{% block page_title %}Sipariş Detayı{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/satis/siparis">Siparişler</a> / {{ sp.siparis_no }}{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div style="font-size:15px;font-weight:700;margin-bottom:10px">{{ sp.siparis_no }}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Müşteri</span><strong>{{ sp.musteri.ad if sp.musteri else '—' }}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Durum</span><span class="badge-tw b-{{ sp.durum.value }}">{{ sp.durum.value }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Termin</span><span>{{ sp.istenen_termin.strftime('%d.%m.%Y') if sp.istened_termin else '—' }}</span></div>
+        </div>
+        <div class="divider"></div>
+        <form method="POST" action="/satis/siparis/{{ sp.id }}/durum">
+          <select name="durum" class="form-select" style="margin-bottom:8px">{% for d in SiparisDurum %}<option value="{{ d.value }}" {% if d==sp.durum %}selected{% endif %}>{{ d.value }}</option>{% endfor %}</select>
+          <button type="submit" class="btn-tw w-100">Durum Güncelle</button>
+        </form>
+        {% if sp.durum.value == 'onaylı' %}
+        <div style="margin-top:10px">
+          <a href="/satis/sevkiyat" class="btn-ghost w-100" style="text-align:center;display:block"><i class="bi bi-truck me-1"></i> Sevkiyat Oluştur</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-list-ul me-2"></i>Sipariş Kalemleri</span>
+        <button class="btn-tw" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalKalem">+ Kalem Ekle</button>
+      </div>
+      <div class="card-body p-0">
+        {% if sp.kalemler %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Ürün / Parti</th><th>Miktar</th><th>Birim Fiyat</th><th>KDV</th><th>Toplam</th></tr></thead>
+          <tbody>
+            {% for k in sp.kalemler %}
+            <tr>
+              <td class="ps-3">
+                {% if k.urun_parti %}<code style="color:var(--green)">{{ k.urun_parti.parti_no }}</code><br>{% endif %}
+                <span style="font-size:12.5px">{{ k.urun.ad if k.urun else k.aciklama or '—' }}</span>
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace">{{ k.miktar }} {{ k.birim or '' }}</td>
+              <td style="font-size:12px">{{ k.birim_fiyat ~ ' ₺' if k.birim_fiyat else '—' }}</td>
+              <td style="font-size:12px">%{{ k.kdv_oran }}</td>
+              <td style="font-weight:600;color:var(--green)">{{ k.toplam ~ ' ₺' if k.toplam else '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:24px;text-align:center;color:var(--muted)">Kalem eklenmemiş</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalKalem" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Sipariş Kalemi Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/satis/siparis/{{ sp.id }}/kalem-ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Ürün</label><select name="urun_id" class="form-select"><option value="">— Seçiniz —</option>{% for u in urunler %}<option value="{{ u.id }}">{{ u.ad }}</option>{% endfor %}</select></div>
+      <div><label class="form-label">Ürün Partisi (stoktan)</label><select name="urun_parti_id" class="form-select"><option value="">— Parti Seçmeden Ekle —</option>{% for p in partiler %}<option value="{{ p.id }}">{{ p.parti_no }} — {{ p.urun.ad if p.urun else '' }} ({{ p.kalan_miktar }} {{ p.birim }})</option>{% endfor %}</select></div>
+      <div class="row g-2">
+        <div class="col-4"><label class="form-label">Miktar *</label><input type="number" name="miktar" class="form-control" step="0.001" required></div>
+        <div class="col-3"><label class="form-label">Birim</label><select name="birim" class="form-select"><option>kg</option><option>adet</option><option>paket</option></select></div>
+        <div class="col-3"><label class="form-label">Birim Fiyat (₺)</label><input type="number" name="birim_fiyat" class="form-control" step="0.01"></div>
+        <div class="col-2"><label class="form-label">KDV%</label><input type="number" name="kdv_oran" class="form-control" value="10"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Ekle</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

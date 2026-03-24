@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Stok Tahmin{% endblock %}
+{% block page_title %}Stok Tüketim Tahmini{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/analiz/">Analiz</a> / Stok Tahmin{% endblock %}
+{% block content %}
+<div class="alert-tw alert-info mb-4"><i class="bi bi-info-circle"></i> Son 30 günlük FIFO çekimleri baz alınarak hesaplanmıştır. Günlük ortalama tüketim × mevcut stok = tahmini gün sayısı.</div>
+<div class="card">
+  <div class="card-header"><i class="bi bi-graph-up me-2"></i>Hammadde Tüketim Tahmini</div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead><tr>
+        <th class="ps-3">Hammadde</th>
+        <th>Mevcut Stok</th>
+        <th>Günlük Ort. Tüketim</th>
+        <th>Tahmini Süre</th>
+        <th>Sipariş Tarihi</th>
+        <th>Durum</th>
+      </tr></thead>
+      <tbody>
+        {% for t in tahminler %}
+        <tr style="background:{% if t.kritik %}rgba(248,81,73,.05){% elif t.siparis_tarihi %}rgba(227,179,65,.03){% else %}transparent{% endif %}">
+          <td class="ps-3" style="font-weight:500">
+            {{ t.hammadde.ad }}
+            {% if t.kritik %}<span class="badge-tw b-karantina" style="margin-left:6px;font-size:10px">KRİTİK</span>{% endif %}
+          </td>
+          <td style="font-family:'JetBrains Mono',monospace;color:{% if t.kritik %}var(--red){% else %}var(--text){% endif %};font-weight:600">
+            {{ t.mevcut }} {{ t.hammadde.birim }}
+          </td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">
+            {% if t.gunluk_ort > 0 %}{{ "%.2f"|format(t.gunluk_ort) }} {{ t.hammadde.birim }}/gün{% else %}—{% endif %}
+          </td>
+          <td>
+            {% if t.gun_yeter %}
+            <span style="font-size:15px;font-weight:700;color:{% if t.gun_yeter < 7 %}var(--red){% elif t.gun_yeter < 14 %}var(--orange){% else %}var(--green){% endif %}">
+              {{ t.gun_yeter }} gün
+            </span>
+            {% else %}
+            <span style="font-size:12px;color:var(--muted)">Tüketim yok</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if t.siparis_tarihi %}
+            <span style="font-size:12.5px;font-weight:600;color:var(--orange)">
+              <i class="bi bi-alarm me-1"></i>{{ t.siparis_tarihi.strftime('%d.%m.%Y') }}
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if not t.gunluk_ort %}
+            <span class="badge-tw b-tükendi">Veri Yok</span>
+            {% elif t.kritik %}
+            <span class="badge-tw b-karantina">Acil Sipariş</span>
+            {% elif t.siparis_tarihi %}
+            <span class="badge-tw b-beklemede">Sipariş Ver</span>
+            {% else %}
+            <span class="badge-tw b-onaylı">Yeterli</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

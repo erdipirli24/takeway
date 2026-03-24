@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Temizlik & Hijyen{% endblock %}
+{% block page_title %}Temizlik & Hijyen Kayıtları{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/kalite/">Kalite</a> / Temizlik{% endblock %}
+{% block topbar_actions %}
+<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalKayit">+ Temizlik Kaydı</button>
+<button class="btn-ghost" data-bs-toggle="modal" data-bs-target="#modalPlan">+ Plan Ekle</button>
+{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-calendar-check me-2"></i>Temizlik Planları</div>
+      <div class="card-body p-0">
+        {% if planlar %}
+        {% for p in planlar %}
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border)">
+          <div style="font-weight:500;font-size:13.5px">{{ p.ad }}</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px">{{ p.alan or '' }} · {{ p.siklık }}</div>
+          {% if p.kullanilan_kimyasal %}<div style="font-size:11px;color:var(--muted)">🧪 {{ p.kullanilan_kimyasal }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="padding:24px;text-align:center;color:var(--muted);font-size:12.5px">Plan eklenmemiş</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-droplet me-2" style="color:var(--blue)"></i>Son Temizlik Kayıtları</div>
+      <div class="card-body p-0">
+        {% if son_kayitlar %}
+        <table class="table mb-0">
+          <thead><tr><th class="ps-3">Alan / Plan</th><th>Durum</th><th>Yapan</th><th>Tarih</th></tr></thead>
+          <tbody>
+            {% for k in son_kayitlar %}
+            <tr>
+              <td class="ps-3" style="font-weight:500">{{ k.alan or (k.plan.ad if k.plan else '—') }}</td>
+              <td><span class="badge-tw {% if k.durum.value=='tamamlandı' %}b-onaylı{% elif k.durum.value=='atlandi' %}b-karantina{% else %}b-beklemede{% endif %}">{{ k.durum.value }}</span></td>
+              <td style="font-size:12px;color:var(--muted)">{{ k.yapan_id or '—' }}</td>
+              <td style="font-size:11px;color:var(--muted)">{{ k.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:32px;text-align:center;color:var(--muted)">Kayıt yok</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalKayit" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Temizlik Kaydı Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/kalite/temizlik/kayit-ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Plan</label><select name="plan_id" class="form-select"><option value="">— Plansız Kayıt —</option>{% for p in planlar %}<option value="{{ p.id }}">{{ p.ad }}</option>{% endfor %}</select></div>
+      <div><label class="form-label">Alan / Ekipman</label><input type="text" name="alan" class="form-control" placeholder="Üretim hattı, Mikser, Soğuk oda..."></div>
+      <div><label class="form-label">Durum</label><select name="durum" class="form-select">{% for d in TemizlikDurum %}<option value="{{ d.value }}">{{ d.value }}</option>{% endfor %}</select></div>
+      <div><label class="form-label">Notlar</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+
+<div class="modal fade" id="modalPlan" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Temizlik Planı</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/kalite/temizlik/plan-ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Plan Adı *</label><input type="text" name="ad" class="form-control" required placeholder="Günlük Üretim Hattı Temizliği"></div>
+      <div class="row g-2">
+        <div class="col-7"><label class="form-label">Alan</label><input type="text" name="alan" class="form-control" placeholder="Üretim hattı"></div>
+        <div class="col-5"><label class="form-label">Sıklık</label><select name="siklık" class="form-select"><option>Günlük</option><option>Haftalık</option><option>Aylık</option><option>Her üretim sonrası</option></select></div>
+      </div>
+      <div><label class="form-label">Kullanılan Kimyasal</label><input type="text" name="kullanilan_kimyasal" class="form-control"></div>
+      <div><label class="form-label">Yöntem</label><textarea name="yontem" class="form-control" rows="2"></textarea></div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Tahmini Süre (dk)</label><input type="number" name="tahmini_sure" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Sorumlu Unvan</label><input type="text" name="sorumlu_unvan" class="form-control"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

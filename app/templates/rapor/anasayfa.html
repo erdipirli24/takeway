@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Raporlar{% endblock %}
+{% block page_title %}Raporlar & Denetim{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Raporlar{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-4"><a href="/rapor/izlenebilirlik" style="display:block" class="card h-100" style="text-decoration:none">
+    <div class="card-body" style="padding:24px">
+      <div style="font-size:32px;margin-bottom:12px">🔍</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">İzlenebilirlik Raporu</div>
+      <div style="font-size:13px;color:var(--muted)">Parti numarasından hammaddeye veya lot numarasından ürüne tam geriye/ileriye iz.</div>
+    </div>
+  </a></div>
+  <div class="col-md-4"><a href="/rapor/haccp" class="card h-100" style="display:block;text-decoration:none">
+    <div class="card-body" style="padding:24px">
+      <div style="font-size:32px;margin-bottom:12px">🛡️</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">HACCP Uyum Raporu</div>
+      <div style="font-size:13px;color:var(--muted)">CCP ölçüm sonuçları, uyum oranı, sapma ve kritik durumlar.</div>
+    </div>
+  </a></div>
+  <div class="col-md-4"><a href="/rapor/tedarikci" class="card h-100" style="display:block;text-decoration:none">
+    <div class="card-body" style="padding:24px">
+      <div style="font-size:32px;margin-bottom:12px">📦</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Tedarikçi Performansı</div>
+      <div style="font-size:13px;color:var(--muted)">Tedarikçi bazlı lot kabul, karantina ve puan analizi.</div>
+    </div>
+  </a></div>
+  <div class="col-md-4"><a href="/rapor/stok" class="card h-100" style="display:block;text-decoration:none">
+    <div class="card-body" style="padding:24px">
+      <div style="font-size:32px;margin-bottom:12px">📊</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Stok & Fire Raporu</div>
+      <div style="font-size:13px;color:var(--muted)">Hammadde stok özeti, kritik seviyeler, fire kayıtları.</div>
+    </div>
+  </a></div>
+  <div class="col-md-4"><a href="/rapor/denetim" class="card h-100" style="display:block;text-decoration:none;border-color:rgba(46,160,67,.3)">
+    <div class="card-body" style="padding:24px">
+      <div style="font-size:32px;margin-bottom:12px">📋</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Denetim Paketi</div>
+      <div style="font-size:13px;color:var(--muted)">Tarım Bakanlığı denetimi için hazır özet rapor paketi.</div>
+    </div>
+  </a></div>
+</div>
+{% endblock %}

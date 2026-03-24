@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Vardiya{% endblock %}
+{% block page_title %}Vardiya Yönetimi{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Vardiya{% endblock %}
+{% block topbar_actions %}<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalEkle"><i class="bi bi-plus-lg me-1"></i> Yeni Vardiya</button>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><i class="bi bi-clock me-2"></i>Vardiya Listesi</div>
+  <div class="card-body p-0">
+    {% if vardiyalar %}
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Tarih</th><th>Tip</th><th>Sorumlu</th><th>Personel</th><th>Üretim</th><th>Durum</th></tr></thead>
+      <tbody>
+        {% for v in vardiyalar %}
+        <tr onclick="location.href='/vardiya/{{ v.id }}'" style="cursor:pointer">
+          <td class="ps-3" style="font-weight:500">{{ v.tarih.strftime('%d.%m.%Y') }}</td>
+          <td><span class="badge-tw b-transfer">{{ v.tip.value }}</span></td>
+          <td style="font-size:12px">{{ v.sorumlu.ad_soyad if v.sorumlu else '—' }}</td>
+          <td style="font-size:12px;color:var(--muted)">{{ v.personel|length }} kişi</td>
+          <td style="font-size:12px;color:var(--muted)">{{ v.uretim_emirleri_rel|length }} emir</td>
+          <td>{% if v.bitis %}<span class="badge-tw b-tükendi">Kapalı</span>{% else %}<span class="badge-tw b-devam">Aktif</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--muted)">Vardiya kaydı yok</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="modalEkle" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Vardiya Aç</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/vardiya/ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Tarih & Saat *</label><input type="datetime-local" name="tarih" class="form-control" required></div>
+      <div><label class="form-label">Vardiya Tipi</label>
+        <select name="tip" class="form-select">{% for t in VardiyaTip %}<option value="{{ t.value }}">{{ t.value }}</option>{% endfor %}</select>
+      </div>
+      <div><label class="form-label">Sorumlu</label>
+        <select name="sorumlu_id" class="form-select"><option value="">— Seçiniz —</option>{% for k in kullanicilar %}<option value="{{ k.id }}">{{ k.ad_soyad }}{% if k.unvan %} ({{ k.unvan }}){% endif %}</option>{% endfor %}</select>
+      </div>
+      <div><label class="form-label">Notlar</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Aç</button></div>
+  </form>
+</div></div></div>
+{% endblock %}

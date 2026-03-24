@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Analiz{% endblock %}
+{% block page_title %}Analiz & Akıllı Özellikler{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / Analiz{% endblock %}
+{% block content %}
+<div class="row g-3">
+  {% for href, icon, renk, baslik, aciklama in [
+    ('/analiz/allerjen','bi-exclamation-triangle-fill','var(--red)','Allerjen Matrisi','Hammadde ve ürün bazlı allerjen haritası'),
+    ('/analiz/stok-tahmin','bi-graph-up','var(--blue)','Stok Tüketim Tahmini','Kaç günlük stok var, ne zaman sipariş gerekiyor'),
+    ('/analiz/raf-omru','bi-hourglass-split','var(--orange)','Raf Ömrü Simülasyonu','Aktif ürün partilerinin SKT analizi'),
+    ('/analiz/kalibrasyon','bi-rulers','var(--green)','Kalibrasyon Takibi','Ekipman kalibrasyon geçerlilik durumu'),
+    ('/vardiya/','bi-clock','var(--purple)','Vardiya Yönetimi','Personel ve üretim vardiya takibi'),
+  ] %}
+  <div class="col-md-4"><a href="{{ href }}" class="card h-100" style="display:block;text-decoration:none">
+    <div class="card-body" style="padding:22px">
+      <i class="bi {{ icon }}" style="font-size:28px;color:{{ renk }};margin-bottom:10px;display:block"></i>
+      <div style="font-size:15px;font-weight:700;margin-bottom:5px">{{ baslik }}</div>
+      <div style="font-size:13px;color:var(--muted)">{{ aciklama }}</div>
+    </div>
+  </a></div>
+  {% endfor %}
+</div>
+{% endblock %}

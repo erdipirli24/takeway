@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Firma Yönetimi{% endblock %}
+{% block page_title %}Firma Yönetimi{% endblock %}
+{% block breadcrumb %}Platform Admin{% endblock %}
+{% block topbar_actions %}<button class="btn-tw" data-bs-toggle="modal" data-bs-target="#modalFirma"><i class="bi bi-plus-lg me-1"></i> Yeni Firma</button>{% endblock %}
+{% block content %}
+{% for firma in firmalar %}
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><code style="font-size:13px;color:var(--blue)">{{ firma.firma_kodu }}</code> — <strong>{{ firma.ad }}</strong></span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:12px;color:var(--muted)">{{ firma.sehir or '' }}</span>
+      <button class="btn-ghost" style="font-size:12px" data-bs-toggle="modal" data-bs-target="#modalSube{{ firma.id }}">+ Şube Ekle</button>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    {% if firma.subeler %}
+    <table class="table mb-0">
+      <thead><tr><th class="ps-3">Şube Kodu</th><th>Ad</th><th>Şehir</th><th>Kullanıcı Sayısı</th></tr></thead>
+      <tbody>
+        {% for s in firma.subeler %}
+        <tr><td class="ps-3"><code>{{ s.firma_kodu }}</code></td><td>{{ s.ad }}</td><td>{{ s.sehir or '—' }}</td><td>{{ s.kullanicilar|length }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:16px 20px;font-size:12.5px;color:var(--muted)">Henüz şube yok</div>
+    {% endif %}
+  </div>
+</div>
+<div class="modal fade" id="modalSube{{ firma.id }}" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">{{ firma.ad }} — Şube Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/firma/{{ firma.id }}/sube-ekle">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Şube Adı *</label><input type="text" name="ad" class="form-control" placeholder="Kadıköy Şube" required></div>
+      <div><label class="form-label">Slug *</label><input type="text" name="slug" class="form-control" placeholder="elfiga-kadikoy" required></div>
+      <div class="row g-2"><div class="col-6"><label class="form-label">Şehir</label><input type="text" name="sehir" class="form-control"></div></div>
+      <div style="background:var(--surf2);border:1px solid var(--border);border-radius:7px;padding:12px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--muted)">Şube Admin Hesabı</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div><label class="form-label">Ad Soyad *</label><input type="text" name="admin_ad" class="form-control" required></div>
+          <div><label class="form-label">E-posta *</label><input type="email" name="admin_email" class="form-control" required></div>
+          <div><label class="form-label">Şifre *</label><input type="password" name="admin_sifre" class="form-control" required></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Şube Oluştur</button></div>
+  </form>
+</div></div></div>
+{% endfor %}
+
+<div class="modal fade" id="modalFirma" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Yeni Firma Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <form method="POST" action="/firma/ekle">
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-md-8"><label class="form-label">Firma Adı *</label><input type="text" name="ad" class="form-control" required></div>
+        <div class="col-md-4"><label class="form-label">Slug *</label><input type="text" name="slug" class="form-control" required placeholder="elfiga"></div>
+        <div class="col-md-4"><label class="form-label">Vergi No</label><input type="text" name="vergi_no" class="form-control"></div>
+        <div class="col-md-4"><label class="form-label">Şehir</label><input type="text" name="sehir" class="form-control"></div>
+        <div class="col-md-4"><label class="form-label">Telefon</label><input type="text" name="telefon" class="form-control"></div>
+        <div class="col-12"><div style="background:var(--surf2);border:1px solid var(--border);border-radius:7px;padding:12px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:10px;color:var(--muted)">Firma Admin Hesabı</div>
+          <div class="row g-2">
+            <div class="col-md-4"><label class="form-label">Ad Soyad *</label><input type="text" name="admin_ad" class="form-control" required></div>
+            <div class="col-md-4"><label class="form-label">E-posta *</label><input type="email" name="admin_email" class="form-control" required></div>
+            <div class="col-md-4"><label class="form-label">Şifre *</label><input type="password" name="admin_sifre" class="form-control" required></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Firma Oluştur</button></div>
+  </form>
+</div></div></div>
+{% endblock %}
