@@ -625,6 +625,7 @@ class YariMamul(Base):
     created_by      = Column(Integer, ForeignKey("kullanicilar.id"))
 
     recete          = relationship("Recete")
+    uretim_emri     = relationship("UretimEmri", back_populates="yari_mamul_kaydi")
     kullanim_kayitlari = relationship("YariMamulKullanim", back_populates="yari_mamul")
 
 
