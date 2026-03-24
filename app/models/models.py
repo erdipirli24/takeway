@@ -214,7 +214,7 @@ class Depo(Base):
 
     firma        = relationship("Firma", back_populates="depolar")
     stoklar      = relationship("DepoStok", back_populates="depo", cascade="all,delete")
-    hareketler   = relationship("DepoHareket", primaryjoin="DepoHareket.depo_id==Depo.id", back_populates="depo")
+    hareketler   = relationship("DepoHareket", foreign_keys="[DepoHareket.depo_id]", back_populates="depo")
 
 
 class DepoStok(Base):
@@ -252,7 +252,7 @@ class DepoHareket(Base):
     tarih          = Column(DateTime(timezone=True), server_default=func.now())
     yapan_id       = Column(Integer, ForeignKey("kullanicilar.id"))
 
-    depo           = relationship("Depo", primaryjoin="DepoHareket.depo_id==Depo.id", back_populates="hareketler")
+    depo           = relationship("Depo", foreign_keys="[DepoHareket.depo_id]", back_populates="hareketler")
     lot            = relationship("HammaddeLot", back_populates="hareketler")
 
 
@@ -566,7 +566,7 @@ class Recete(Base):
 
     firma           = relationship("Firma")
     urun            = relationship("Urun", back_populates="receteler")
-    kalemler        = relationship("ReceteKalem", back_populates="recete", cascade="all,delete")
+    kalemler        = relationship("ReceteKalem", foreign_keys='recete_kalemler.c.recete_id', back_populates="recete", cascade="all,delete")
 
 
 class ReceteKalem(Base):
@@ -587,9 +587,9 @@ class ReceteKalem(Base):
     tolerans_yuzde  = Column(Numeric(5,2), default=5)         # ±% tolerans
     notlar          = Column(String(200))
 
-    recete          = relationship("Recete", primaryjoin="ReceteKalem.recete_id==Recete.id", back_populates="kalemler")
+    recete          = relationship("Recete", foreign_keys='recete_kalemler.c.recete_id', back_populates="kalemler")
     hammadde        = relationship("Hammadde")
-    ara_urun_recete = relationship("Recete", primaryjoin="ReceteKalem.ara_urun_recete_id==Recete.id")
+    ara_urun_recete = relationship("Recete", foreign_keys='recete_kalemler.c.ara_urun_recete_id')
 
 
 # ─── ARA ÜRÜN (KARIşIM) ──────────────────────────────────
