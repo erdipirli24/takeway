@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Depends
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
@@ -16,9 +16,10 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 def firma_id_listesi(user: Kullanici, db: Session):
-    """Kullanıcının görebileceği firma ID'leri (merkez + şubeler)."""
     if user.is_super:
-        return [f.id for f in db.query(Firma.id).all()]
+        return [row[0] for row in db.query(Firma.id).all()]
+    if not user.firma_id:
+        return []
     firma = db.query(Firma).filter(Firma.id == user.firma_id).first()
     if not firma:
         return []
@@ -35,41 +36,39 @@ def dashboard(
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if not user:
+        return RedirectResponse("/auth/login", status_code=302)
+
     fid_list = firma_id_listesi(user, db)
-    now = datetime.now(timezone.utc)
+    now      = datetime.now(timezone.utc)
     limit_30 = now + timedelta(days=30)
 
     aktif_lot = db.query(HammaddeLot).filter(
         HammaddeLot.firma_id.in_(fid_list),
         HammaddeLot.durum.in_([LotDurum.onaylı, LotDurum.kullanımda])
-    ).count()
+    ).count() if fid_list else 0
 
     karantina = db.query(HammaddeLot).filter(
         HammaddeLot.firma_id.in_(fid_list),
         HammaddeLot.durum == LotDurum.karantina
-    ).count()
+    ).count() if fid_list else 0
 
     bekleyen_numune = db.query(Numune).filter(
         Numune.firma_id.in_(fid_list),
         Numune.durum == NumuneDurum.beklemede
-    ).count()
+    ).count() if fid_list else 0
 
     skt_yaklasan = db.query(HammaddeLot).filter(
         HammaddeLot.firma_id.in_(fid_list),
         HammaddeLot.son_kullanma <= limit_30,
         HammaddeLot.son_kullanma >= now,
         HammaddeLot.durum.in_([LotDurum.onaylı, LotDurum.kullanımda, LotDurum.beklemede])
-    ).order_by(HammaddeLot.son_kullanma.asc()).limit(10).all()
+    ).order_by(HammaddeLot.son_kullanma.asc()).limit(10).all() if fid_list else []
 
     son_lotlar = db.query(HammaddeLot).filter(
         HammaddeLot.firma_id.in_(fid_list)
-    ).order_by(HammaddeLot.created_at.desc()).limit(8).all()
+    ).order_by(HammaddeLot.created_at.desc()).limit(8).all() if fid_list else []
 
-    son_numuneler = db.query(Numune).filter(
-        Numune.firma_id.in_(fid_list)
-    ).order_by(Numune.created_at.desc()).limit(6).all()
-
-    # Şube listesi (merkez için)
     subeler = []
     if user.firma_id:
         firma = db.query(Firma).filter(Firma.id == user.firma_id).first()
@@ -85,6 +84,5 @@ def dashboard(
         "bekleyen_numune": bekleyen_numune,
         "skt_yaklasan": skt_yaklasan,
         "son_lotlar": son_lotlar,
-        "son_numuneler": son_numuneler,
         "subeler": subeler,
     })

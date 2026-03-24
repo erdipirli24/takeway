@@ -14,8 +14,9 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, db: Session = Depends(get_db)):
-    if get_user_optional(request, db):
-        return RedirectResponse("/", status_code=302)
+    user = get_user_optional(request, db)
+    if user:
+        return RedirectResponse("/dashboard", status_code=302)
     return templates.TemplateResponse("auth/login.html", {"request": request, "error": None})
 
 
@@ -38,8 +39,15 @@ def login_post(
     user.last_login = datetime.now(timezone.utc)
     db.commit()
     token = create_token({"sub": user.id, "firma_id": user.firma_id})
-    resp  = RedirectResponse("/", status_code=302)
-    resp.set_cookie("tw_token", token, httponly=True, samesite="lax", max_age=36000)
+    resp  = RedirectResponse("/dashboard", status_code=302)
+    resp.set_cookie(
+        key="tw_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        max_age=36000,
+        secure=False   # Railway HTTPS için True yapılabilir
+    )
     return resp
 
 
