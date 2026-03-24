@@ -6,7 +6,6 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.database import init_db, SessionLocal
-from app.middleware.auth_middleware import AuthMiddleware
 from app.routers import auth, dashboard, firma, kullanici, depo, makine, recete, uretim, kalite, satis, sikayet, rapor, vardiya, analiz, mobil, etiket, sistem
 from app.models.models import (
     Kullanici, Firma, Depo, Hammadde, HammaddeKategori,
@@ -161,7 +160,6 @@ def _seed():
 
 
 app = FastAPI(title="TraceWay", version="2.0.0", lifespan=lifespan)
-app.add_middleware(AuthMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(auth.router)
