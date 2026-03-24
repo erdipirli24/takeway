@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Request, Depends
+from fastapi import Request, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import Kullanici, KullaniciYetki, Modul
@@ -29,7 +29,6 @@ def verify_password(plain: str, hashed: str) -> bool:
 def create_token(data: dict) -> str:
     payload = data.copy()
     payload["exp"] = datetime.now(timezone.utc) + timedelta(hours=TOKEN_HOURS)
-    # sub mutlaka string olsun
     payload["sub"] = str(payload.get("sub", ""))
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -45,7 +44,6 @@ def get_current_user(
     request: Request,
     db: Session = Depends(get_db)
 ) -> Optional[Kullanici]:
-    """Cookie'den kullanıcıyı döner. Geçersizse None."""
     token = request.cookies.get("tw_token")
     if not token:
         return None
@@ -56,11 +54,10 @@ def get_current_user(
         user_id = int(payload.get("sub", 0))
         if not user_id:
             return None
-        user = db.query(Kullanici).filter(
+        return db.query(Kullanici).filter(
             Kullanici.id == user_id,
             Kullanici.aktif == True
         ).first()
-        return user
     except Exception:
         return None
 
@@ -74,6 +71,17 @@ def kullanici_yetki(user: Optional[Kullanici], modul: Modul, giris: bool = False
     if not yetki:
         return False
     return yetki.giris_yapabilir if giris else yetki.gorebilir
+
+
+def yetki_kontrol(modul: Modul, giris: bool = False):
+    """Dependency — yetkisiz erişimi 403 ile keser."""
+    def _check(user: Optional[Kullanici] = Depends(get_current_user)):
+        if not user:
+            raise HTTPException(status_code=401, detail="Giriş gerekli.")
+        if not kullanici_yetki(user, modul, giris):
+            raise HTTPException(status_code=403, detail="Yetkiniz yok.")
+        return user
+    return _check
 
 
 def tum_yetkiler_olustur(db: Session, kullanici_id: int, firma_admin: bool = False):
