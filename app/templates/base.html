@@ -175,7 +175,7 @@
     <a href="/sikayet/" class="sb-link {% if request.url.path == '/sikayet/' %}active{% endif %}">
       <i class="bi bi-chat-square-text"></i> Şikayetler
     </a>
-    <a href="/sikayet/?recall=1" class="sb-link {% if 'recall=1' in str(request.url) %}active{% endif %}" style="color:var(--red)">
+    <a href="/sikayet/?recall=1" class="sb-link {% if 'recall=1' in request.url.query %}active{% endif %}" style="color:var(--red)">
       <i class="bi bi-exclamation-triangle"></i> Recall
     </a>
     <a href="/rapor/" class="sb-link {% if '/rapor' in request.url.path %}active{% endif %}">
