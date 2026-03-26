@@ -107,6 +107,7 @@ def emir_ekle(
     db: Session = Depends(get_db)
 ):
     fid = user.firma_id
+    _urun_id = safe_int(urun_id)
 
     def parse_dt(s):
         if s:
@@ -509,6 +510,7 @@ def parti_kaydet(
     db: Session = Depends(get_db)
 ):
     fid = user.firma_id
+    _urun_id = safe_int(urun_id)
 
     def parse_dt(s):
         if s:
@@ -630,8 +632,9 @@ def yari_mamul_listesi(
 @router.post("/{eid}/tamamla-ve-stokla")
 def tamamla_ve_stokla(
     eid: int,
-    urun_id: int = Form(...),
-    urun_tipi: str = Form("ana"),   # ara | ana
+    urun_id: str = Form(""),
+    urun_tipi: str = Form("ana"),
+    urun_adi: str = Form(""),
     miktar: float = Form(...),
     birim: str = Form("kg"),
     raf_omru_gun: str = Form(""),
@@ -642,6 +645,7 @@ def tamamla_ve_stokla(
     db: Session = Depends(get_db)
 ):
     fid = user.firma_id
+    _urun_id = safe_int(urun_id)
 
     def parse_dt(s):
         if s and s.strip():
@@ -665,13 +669,14 @@ def tamamla_ve_stokla(
             f"TW-ARA ÜRÜN\nParti: {pno}\nMiktar: {miktar} {birim}\n"
             f"SKT: {son_kullanma_dt.strftime('%d.%m.%Y %H:%M')}"
         )
-        urun = db.query(Urun).filter(Urun.id == urun_id).first()
+        urun = db.query(Urun).filter(Urun.id == _urun_id).first() if _urun_id else None
+        _ad = urun_adi or (urun.ad if urun else None) or (emir.recete.ad if emir.recete else "Ara Ürün")
         db.add(YariMamul(
             firma_id       = fid,
-            recete_id      = emir.recete_id or urun_id,
+            recete_id      = emir.recete_id or _urun_id,
             uretim_emri_id = eid,
             parti_no       = pno,
-            ad             = urun.ad if urun else emir.urun_adi,
+            ad             = _ad,
             uretim_miktari = miktar,
             kalan_miktar   = miktar,
             birim          = birim,
@@ -683,14 +688,14 @@ def tamamla_ve_stokla(
         ))
     else:
         # Ana ürün → UrunParti tablosuna
-        pno = parti_no.strip() or _parti_no(db, fid, urun_id)
+        pno = parti_no.strip() or _parti_no(db, fid, _urun_id or 0)
         qr  = qr_olustur(
             f"TW-PARTİ\nParti No: {pno}\nÜretim Emri: {emir.emri_no}\n"
             f"Miktar: {miktar} {birim}"
         )
         db.add(UrunParti(
             firma_id       = fid,
-            urun_id        = urun_id,
+            urun_id        = _urun_id,
             uretim_emri_id = eid,
             parti_no       = pno,
             uretim_miktari = miktar,
