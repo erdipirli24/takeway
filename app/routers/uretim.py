@@ -10,6 +10,7 @@ from app.database import get_db
 from app.auth import get_current_user
 from app.models.models import (
     Kullanici, UretimEmri, UretimAsama, UretimHammadde, UretimMakineAtama,
+    ReceteAsama,
     UrunParti, YariMamul, YariMamulKullanim, YariMamulDurum,
     Recete, ReceteKalem, ReceteTip, Urun, Makine, MacineDurum,
     HammaddeLot, Hammadde, Depo, LotDurum, UretimDurum,
@@ -140,9 +141,19 @@ def emir_ekle(
     )
     db.add(emir); db.flush()
 
-    # Varsayılan aşamalar
-    for i, asama_adi in enumerate(VARSAYILAN_ASAMALAR, 1):
-        db.add(UretimAsama(emir_id=emir.id, sira=i, ad=asama_adi))
+    # Aşamaları reçeteden al, yoksa varsayılanı kullan
+    recete_asamalari = []
+    if recete_id:
+        recete_asamalari = db.query(ReceteAsama).filter(
+            ReceteAsama.recete_id == recete_id
+        ).order_by(ReceteAsama.sira).all()
+
+    if recete_asamalari:
+        for ra in recete_asamalari:
+            db.add(UretimAsama(emir_id=emir.id, sira=ra.sira, ad=ra.ad))
+    else:
+        for i, asama_adi in enumerate(VARSAYILAN_ASAMALAR, 1):
+            db.add(UretimAsama(emir_id=emir.id, sira=i, ad=asama_adi))
 
     db.commit()
     return RedirectResponse(f"/uretim/{emir.id}", status_code=302)
@@ -612,3 +623,89 @@ def yari_mamul_listesi(
         "now": now,
         "YariMamulDurum": YariMamulDurum,
     })
+
+
+# ═══ ÜRETİMİ TAMAMLA & STOĞA AL ═════════════════════════
+
+@router.post("/{eid}/tamamla-ve-stokla")
+def tamamla_ve_stokla(
+    eid: int,
+    urun_id: int = Form(...),
+    urun_tipi: str = Form("ana"),   # ara | ana
+    miktar: float = Form(...),
+    birim: str = Form("kg"),
+    raf_omru_gun: str = Form(""),
+    son_kullanma: str = Form(""),
+    depo_id: int = Form(...),
+    parti_no: str = Form(""),
+    user: Kullanici = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    fid = user.firma_id
+
+    def parse_dt(s):
+        if s and s.strip():
+            try: return datetime.strptime(s.strip(), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            except: pass
+        return None
+
+    emir = db.query(UretimEmri).filter(
+        UretimEmri.id == eid, UretimEmri.firma_id == fid
+    ).first()
+    if not emir:
+        return RedirectResponse(f"/uretim/{eid}", status_code=302)
+
+    if urun_tipi == "ara":
+        # Ara ürün → YariMamul tablosuna
+        raf_gun = int(raf_omru_gun) if raf_omru_gun and raf_omru_gun.strip().isdigit() else 2
+        son_kullanma_dt = _now() + timedelta(days=raf_gun)
+        pno = parti_no.strip() or _yari_parti_no(db, fid)
+
+        qr = qr_olustur(
+            f"TW-ARA ÜRÜN\nParti: {pno}\nMiktar: {miktar} {birim}\n"
+            f"SKT: {son_kullanma_dt.strftime('%d.%m.%Y %H:%M')}"
+        )
+        urun = db.query(Urun).filter(Urun.id == urun_id).first()
+        db.add(YariMamul(
+            firma_id       = fid,
+            recete_id      = emir.recete_id or urun_id,
+            uretim_emri_id = eid,
+            parti_no       = pno,
+            ad             = urun.ad if urun else emir.urun_adi,
+            uretim_miktari = miktar,
+            kalan_miktar   = miktar,
+            birim          = birim,
+            raf_omru_gun   = raf_gun,
+            son_kullanma   = son_kullanma_dt,
+            depo_id        = depo_id,
+            qr_data        = qr,
+            created_by     = user.id,
+        ))
+    else:
+        # Ana ürün → UrunParti tablosuna
+        pno = parti_no.strip() or _parti_no(db, fid, urun_id)
+        qr  = qr_olustur(
+            f"TW-PARTİ\nParti No: {pno}\nÜretim Emri: {emir.emri_no}\n"
+            f"Miktar: {miktar} {birim}"
+        )
+        db.add(UrunParti(
+            firma_id       = fid,
+            urun_id        = urun_id,
+            uretim_emri_id = eid,
+            parti_no       = pno,
+            uretim_miktari = miktar,
+            kalan_miktar   = miktar,
+            birim          = birim,
+            uretim_tarihi  = _now(),
+            son_kullanma   = parse_dt(son_kullanma),
+            depo_id        = depo_id,
+            qr_data        = qr,
+        ))
+        emir.uretilen_miktar = float(emir.uretilen_miktar or 0) + miktar
+
+    # Emri tamamlandı yap
+    emir.durum = UretimDurum.tamamlandı
+    emir.bitis = _now()
+    db.commit()
+
+    return RedirectResponse(f"/uretim/{eid}", status_code=302)

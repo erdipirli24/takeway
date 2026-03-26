@@ -192,6 +192,8 @@
               <button type="submit" class="btn-tw" style="font-size:11px;padding:4px 10px">✓ Tamamla</button>
             </form>
           </div>
+          {% else %}
+          <span style="color:var(--green);font-size:12px">{{ a.bitis.strftime('%H:%M') if a.bitis else '✓' }}</span>
           {% endif %}
         </div>
 
@@ -222,7 +224,16 @@
     <div class="card mb-3">
       <div class="card-header d-flex justify-content-between">
         <span><i class="bi bi-box-seam me-2" style="color:var(--green)"></i>Üretilen Ürün Partileri</span>
-        <button class="btn-tw" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalParti">+ Parti Kaydet</button>
+        <div style="display:flex;gap:6px">
+          {% set tamamlanan_say = emir.asama_kayitlari|selectattr('tamamlandi','eq',true)|list|length %}
+          {% set toplam_say = emir.asama_kayitlari|length %}
+          {% if tamamlanan_say == toplam_say and toplam_say > 0 and emir.durum.value != 'tamamlandı' %}
+          <button class="btn-tw" style="font-size:12px;padding:4px 12px;background:var(--orange)" data-bs-toggle="modal" data-bs-target="#modalTamamla">
+            <i class="bi bi-check-circle me-1"></i> Üretimi Tamamla
+          </button>
+          {% endif %}
+          <button class="btn-tw" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalParti">+ Parti Kaydet</button>
+        </div>
       </div>
       <div class="card-body p-0">
         {% if emir.urun_partiler %}
@@ -384,3 +395,98 @@
 function showQR(no,b64){document.getElementById('qrTitle').textContent=no;document.getElementById('qrImg').src='data:image/png;base64,'+b64;new bootstrap.Modal(document.getElementById('modalQR')).show();}
 </script>
 {% endblock %}
+
+<!-- ÜRETİMİ TAMAMLA MODAL -->
+<div class="modal fade" id="modalTamamla" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header" style="background:rgba(46,160,67,.08)">
+    <h5 class="modal-title"><i class="bi bi-check-circle me-2" style="color:var(--green)"></i>Üretimi Tamamla & Stoğa Al</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+  <form method="POST" action="/uretim/{{ emir.id }}/tamamla-ve-stokla">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="alert-tw alert-success" style="font-size:12.5px">
+        <i class="bi bi-info-circle"></i>
+        Tüm aşamalar tamamlandı! Ürünü stoğa almak için depo ve miktarı belirleyin.
+      </div>
+
+      <div>
+        <label class="form-label">Ürün *</label>
+        <select name="urun_id" class="form-select" required>
+          <option value="">— Ürün seçin —</option>
+          {% for u in urunler %}<option value="{{ u.id }}" {% if emir.urun_id == u.id %}selected{% endif %}>{{ u.ad }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label">Bu üretim nedir? *</label>
+        <div style="display:flex;gap:8px">
+          <label style="flex:1;cursor:pointer;border:2px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px" id="tipAraUrun">
+            <input type="radio" name="urun_tipi" value="ara" style="accent-color:var(--orange)">
+            <div><div style="font-weight:600;font-size:13px">🧩 Ara Ürün</div><div style="font-size:11px;color:var(--muted)">Hamur, karışım vb.</div></div>
+          </label>
+          <label style="flex:1;cursor:pointer;border:2px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px" id="tipAnaUrun">
+            <input type="radio" name="urun_tipi" value="ana" checked style="accent-color:var(--green)">
+            <div><div style="font-weight:600;font-size:13px">🎯 Ana Ürün</div><div style="font-size:11px;color:var(--muted)">Son ürün, satışa hazır</div></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="row g-2">
+        <div class="col-6">
+          <label class="form-label">Üretilen Miktar *</label>
+          <input type="number" name="miktar" class="form-control" step="0.001" required placeholder="{{ emir.hedef_miktar|fmt }}">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Birim</label>
+          <select name="birim" class="form-select">
+            <option>kg</option><option>adet</option><option>paket</option><option>g</option><option>lt</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Ara ürün için: raf ömrü -->
+      <div id="rafOmruDiv">
+        <label class="form-label">Raf Ömrü (gün) <small style="color:var(--muted)">— ara ürün için</small></label>
+        <input type="number" name="raf_omru_gun" class="form-control" placeholder="2" min="1">
+      </div>
+
+      <!-- Ana ürün için: son kullanma tarihi -->
+      <div id="sktDiv" style="display:none">
+        <label class="form-label">Son Kullanma Tarihi</label>
+        <input type="date" name="son_kullanma" class="form-control">
+      </div>
+
+      <div>
+        <label class="form-label">Depo *</label>
+        <select name="depo_id" class="form-select" required>
+          <option value="">— Depo seçin —</option>
+          {% for d in depolar %}<option value="{{ d.id }}">{{ d.ad }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label">Parti No <small style="color:var(--muted)">(boş = otomatik)</small></label>
+        <input type="text" name="parti_no" class="form-control" placeholder="Otomatik oluşturulur">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button>
+      <button type="submit" class="btn-tw" style="background:var(--green)">
+        <i class="bi bi-check-circle me-1"></i> Tamamla & Stoğa Al
+      </button>
+    </div>
+  </form>
+</div></div></div>
+
+<script>
+document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    document.querySelectorAll('#tipAraUrun,#tipAnaUrun').forEach(function(el) { el.style.borderColor='var(--border)'; });
+    this.closest('label').style.borderColor = this.value==='ara' ? 'var(--orange)' : 'var(--green)';
+    document.getElementById('rafOmruDiv').style.display = this.value==='ara' ? '' : 'none';
+    document.getElementById('sktDiv').style.display = this.value==='ana' ? '' : 'none';
+  });
+});
+document.querySelector('#tipAnaUrun').style.borderColor = 'var(--green)';
+</script>
+

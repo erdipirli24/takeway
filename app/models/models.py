@@ -1240,3 +1240,18 @@ class DenetimIzi(Base):
     tarih       = Column(DateTime(timezone=True), server_default=func.now())
 
     firma       = relationship("Firma")
+
+
+# ─── REÇETE AŞAMA ────────────────────────────────────────
+
+class ReceteAsama(Base):
+    """Reçeteye bağlı üretim aşamaları — üretim emrinde otomatik kullanılır."""
+    __tablename__ = "recete_asamalari"
+
+    id          = Column(Integer, primary_key=True)
+    recete_id   = Column(Integer, ForeignKey("receteler.id"), nullable=False)
+    sira        = Column(Integer, nullable=False)
+    ad          = Column(String(150), nullable=False)
+    aciklama    = Column(Text)
+
+    recete      = relationship("Recete", foreign_keys=[recete_id])

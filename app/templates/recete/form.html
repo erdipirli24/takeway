@@ -5,43 +5,84 @@
 {% block content %}
 <form method="POST" action="/recete/kaydet" id="formRecete">
 <div class="row g-3">
+
+  <!-- SOL: Reçete Bilgileri -->
   <div class="col-lg-5">
-    <div class="card h-100">
+    <div class="card mb-3">
       <div class="card-header"><i class="bi bi-info-circle me-2"></i>Reçete Bilgileri</div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
-        <div><label class="form-label">Reçete Adı *</label><input type="text" name="ad" class="form-control" placeholder="Temel Kurabiye Hamuru" required></div>
-        <div><label class="form-label">Tip *</label>
-          <select name="tip" class="form-select" id="selTip">
-            {% for t in ReceteTip %}<option value="{{ t.value }}">{{ t.value }} — {% if t.value=='hammadde' %}Direkt hammaddeden ürün{% elif t.value=='karisim' %}Ara ürün (hamur, krema, sos){% else %}Hem hammadde hem ara ürün{% endif %}</option>{% endfor %}
+
+        <div>
+          <label class="form-label">Reçete Adı *</label>
+          <input type="text" name="ad" class="form-control" placeholder="Temel Hamur, Elfiga Mantı..." required>
+        </div>
+
+        <div>
+          <label class="form-label">Ürün Tipi *</label>
+          <div style="display:flex;gap:8px">
+            <label style="flex:1;cursor:pointer;border:2px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;transition:all .15s" id="tipAra">
+              <input type="radio" name="tip" value="karisim" style="accent-color:var(--orange)"> 
+              <div><div style="font-weight:600;font-size:13px">🧩 Ara Ürün</div><div style="font-size:11px;color:var(--muted)">Hamur, kıyma, baharat karışımı</div></div>
+            </label>
+            <label style="flex:1;cursor:pointer;border:2px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;transition:all .15s" id="tipAna">
+              <input type="radio" name="tip" value="hammadde" checked style="accent-color:var(--green)">
+              <div><div style="font-weight:600;font-size:13px">🎯 Ana Ürün</div><div style="font-size:11px;color:var(--muted)">Mantı, gözleme, son ürün</div></div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">Bağlı Ürün <small style="color:var(--muted)">(opsiyonel)</small></label>
+          <select name="urun_id" class="form-select">
+            <option value="">— Ürün seçin —</option>
+            {% for u in urunler %}<option value="{{ u.id }}">{{ u.ad }}</option>{% endfor %}
           </select>
         </div>
-        <div><label class="form-label">Bağlı Ürün <small style="color:var(--muted)">(final ürün için)</small></label>
-          <select name="urun_id" class="form-select"><option value="">— Opsiyonel —</option>{% for u in urunler %}<option value="{{ u.id }}">{{ u.ad }}</option>{% endfor %}</select>
-        </div>
+
         <div class="divider"></div>
-        <div style="font-size:12px;font-weight:600;color:var(--muted)">BAZ BİRİM — "1 ??? için bu kalemler"</div>
-        <div class="row g-2">
-          <div class="col-5"><label class="form-label">Baz Miktar</label><input type="number" name="baz_miktar" class="form-control" value="1" step="0.001" min="0.001"></div>
-          <div class="col-4"><label class="form-label">Baz Birim</label>
-            <select name="baz_birim" class="form-select">{% for b in birimler %}<option value="{{ b }}">{{ b }}</option>{% endfor %}</select>
+
+        <div>
+          <label class="form-label">Baz Birim <small style="color:var(--muted)">— bu kalemler kaç birim için?</small></label>
+          <div class="row g-2">
+            <div class="col-4"><input type="number" name="baz_miktar" class="form-control" value="1" step="0.001" min="0.001" placeholder="1"></div>
+            <div class="col-4">
+              <select name="baz_birim" class="form-select">{% for b in birimler %}<option value="{{ b }}">{{ b }}</option>{% endfor %}</select>
+            </div>
+            <div class="col-4"><input type="number" name="baz_kg_karsiligi" class="form-control" step="0.0001" placeholder="= kaç kg"></div>
           </div>
-          <div class="col-3"><label class="form-label">= kaç kg?</label><input type="number" name="baz_kg_karsiligi" class="form-control" step="0.0001" placeholder="1.8"></div>
         </div>
-        <div><label class="form-label">Notlar</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
+
+        <div>
+          <label class="form-label">Notlar</label>
+          <textarea name="notlar" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Üretim Aşamaları -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-list-check me-2"></i>Üretim Aşamaları</span>
+        <button type="button" class="btn-ghost" style="font-size:12px;padding:3px 10px" onclick="asamaEkle()">+ Ekle</button>
+      </div>
+      <div id="asamalar" style="padding:8px">
+        <!-- JS ile dolar -->
+      </div>
+      <div style="padding:8px 12px;border-top:1px solid var(--border)">
+        <button type="button" class="btn-ghost w-100" onclick="asamaEkle()"><i class="bi bi-plus me-1"></i> Aşama Ekle</button>
       </div>
     </div>
   </div>
 
+  <!-- SAĞ: Kalemler -->
   <div class="col-lg-7">
     <div class="card">
       <div class="card-header d-flex justify-content-between">
         <span><i class="bi bi-list-ul me-2"></i>Reçete Kalemleri</span>
-        <button type="button" class="btn-tw" style="font-size:12px;padding:4px 10px" onclick="kalemEkle()">+ Kalem Ekle</button>
+        <button type="button" class="btn-tw" style="font-size:12px;padding:4px 12px" onclick="kalemEkle()">+ Kalem Ekle</button>
       </div>
-      <div class="card-body p-0" id="kalemler">
-        <!-- Dinamik satırlar JS ile eklenir -->
-      </div>
-      <div style="padding:12px 16px;border-top:1px solid var(--border)">
+      <div id="kalemler" style="min-height:60px"></div>
+      <div style="padding:10px 14px;border-top:1px solid var(--border)">
         <button type="button" class="btn-ghost w-100" onclick="kalemEkle()"><i class="bi bi-plus me-1"></i> Kalem Ekle</button>
       </div>
     </div>
@@ -50,53 +91,143 @@
 
 <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px">
   <a href="/recete/" class="btn-ghost">İptal</a>
-  <button type="submit" class="btn-tw" style="font-size:14px;padding:9px 24px">Reçeteyi Kaydet</button>
+  <button type="submit" class="btn-tw" style="font-size:14px;padding:9px 28px"><i class="bi bi-check-lg me-1"></i> Reçeteyi Kaydet</button>
 </div>
 </form>
 
 <script>
-const hammaddeler = [{% for h in hammaddeler %}{"id":{{ h.id }},"ad":"{{ h.ad }}","birim":"{{ h.birim }}"},{% endfor %}];
-// Reçete tabanlı ara ürünler (karisim tipi onaylı reçeteler)
-const araUrunRecete = [{% for a in ara_urunler %}{"id":"r_{{ a.id }}","ad":"{{ a.ad }} (reçete)"},{% endfor %}];
-// Stokta mevcut yarı mamuller
-const araUrunStok   = [{% for y in yari_mamuller %}{"id":"y_{{ y.id }}","ad":"{{ y.ad }} — {{ y.kalan_miktar|fmt }} {{ y.birim }} (stok)"},{% endfor %}];
-const araUrunler    = [...araUrunRecete, ...araUrunStok];
-const birimler    = {{ birimler|tojson }};
-let kalemSayisi   = 0;
+// --- VERİLER ---
+const hammaddeler = [
+  {% for h in hammaddeler %}
+  {id: {{ h.id }}, ad: "{{ h.ad|e }}", birim: "{{ h.birim }}"},
+  {% endfor %}
+];
 
-function araSecildi(sel, i) {
-  // r_ prefix = reçete, y_ prefix = yarı mamul
-  const val = sel.value;
-  const tip = val.startsWith('y_') ? 'yari_mamul' : 'recete';
-  const el = document.getElementById('kalem_ara_tip_' + i);
-  if (el) el.value = tip;
-  // Gerçek ID'yi hidden input'a yaz
-  sel.value = val; // r_5 veya y_3 olarak kalacak, backend parse edecek
+const araReceteler = [
+  {% for a in ara_urunler %}
+  {id: "r_{{ a.id }}", ad: "{{ a.ad|e }} (reçete)"},
+  {% endfor %}
+];
+
+const araStok = [
+  {% for y in yari_mamuller %}
+  {id: "y_{{ y.id }}", ad: "{{ y.ad|e }} — {{ y.kalan_miktar|fmt }} {{ y.birim }} (stok)"},
+  {% endfor %}
+];
+
+const birimler = {{ birimler|tojson }};
+
+const varsayilanAsamalar = {
+  "karisim": ["Tartım & Hazırlık", "Karıştırma / Yoğurma", "Dinlendirme", "Kalite Kontrol"],
+  "hammadde": ["Hammadde Kabulü & Tartım", "Ön Hazırlık", "Karışım / Yoğurma", "Şekillendirme", "Pişirme", "Soğutma", "Paketleme & Etiketleme", "Kalite Kontrol"]
+};
+
+let kalemIdx = 0;
+let asamaIdx = 0;
+
+// --- TİP SEÇİMİ ---
+document.querySelectorAll('input[name=tip]').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('#tipAra,#tipAna').forEach(function(el) {
+      el.style.borderColor = 'var(--border)';
+    });
+    var lbl = this.closest('label');
+    if (lbl) lbl.style.borderColor = this.value === 'karisim' ? 'var(--orange)' : 'var(--green)';
+    asamalariYukle(this.value);
+  });
+});
+
+function asamalariYukle(tip) {
+  var container = document.getElementById('asamalar');
+  container.innerHTML = '';
+  asamaIdx = 0;
+  var liste = varsayilanAsamalar[tip] || varsayilanAsamalar['hammadde'];
+  liste.forEach(function(ad) { asamaEkle(ad); });
 }
 
-function kalemEkle(){
-  const i = kalemSayisi++;
-  const div = document.createElement('div');
-  div.style = "padding:12px 16px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 80px 70px 60px auto;gap:8px;align-items:end";
-  div.innerHTML = `
-    <div>
-      <label style="font-size:11px;color:var(--muted);font-weight:500">Hammadde / Ara Ürün</label>
-      <select name="kalem_hammadde_${i}" class="form-select" onchange="this.form.querySelector('[name=kalem_birim_${i}]').value=this.options[this.selectedIndex].dataset.birim||'kg'">
-        <option value="">— Hammadde —</option>
-        ${hammaddeler.map(h=>`<option value="${h.id}" data-birim="${h.birim}">${h.ad}</option>`).join('')}
-      </select>
-      ${araUrunler.length ? `<select name="kalem_ara_${i}" class="form-select" style="margin-top:4px" onchange="araSecildi(this,${i})"><option value="">— Ara Ürün / Yarı Mamul —</option><optgroup label="Reçete (Karışım)">${araUrunRecete.map(a=>\`<option value="\${a.id}">\${a.ad}</option>\`).join('')}</optgroup><optgroup label="Stokta Yarı Mamul">${araUrunStok.map(a=>\`<option value="\${a.id}">\${a.ad}</option>\`).join('')}</optgroup></select><input type="hidden" name="kalem_ara_tip_${i}" id="kalem_ara_tip_${i}">` : ''}
-    </div>
-    <div><label style="font-size:11px;color:var(--muted);font-weight:500">Miktar *</label><input type="number" name="kalem_miktar_${i}" class="form-control" step="0.0001" required></div>
-    <div><label style="font-size:11px;color:var(--muted);font-weight:500">Birim</label>
-      <select name="kalem_birim_${i}" class="form-select">${birimler.map(b=>`<option value="${b}">${b}</option>`).join('')}</select>
-    </div>
-    <div><label style="font-size:11px;color:var(--muted);font-weight:500">±%</label><input type="number" name="kalem_tolerans_${i}" class="form-control" value="5" min="0" max="100"></div>
-    <button type="button" class="btn-red" onclick="this.parentElement.remove()" style="padding:6px 10px"><i class="bi bi-trash"></i></button>
-  `;
+function asamaEkle(ad) {
+  var idx = asamaIdx++;
+  var div = document.createElement('div');
+  div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--border)';
+  div.innerHTML =
+    '<span style="color:var(--muted);font-size:12px;min-width:16px">' + (idx+1) + '</span>' +
+    '<input type="text" name="asama_' + idx + '" class="form-control" value="' + (ad||'') + '" placeholder="Aşama adı..." style="flex:1">' +
+    '<button type="button" onclick="this.parentElement.remove();yenidenNumarala()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px">✕</button>';
+  document.getElementById('asamalar').appendChild(div);
+}
+
+function yenidenNumarala() {
+  var items = document.querySelectorAll('#asamalar > div');
+  items.forEach(function(div, i) {
+    var span = div.querySelector('span');
+    if (span) span.textContent = i+1;
+  });
+}
+
+// --- KALEM EKLE ---
+function kalemEkle() {
+  var i = kalemIdx++;
+  var div = document.createElement('div');
+  div.style.cssText = 'padding:12px 14px;border-bottom:1px solid var(--border)';
+
+  var araOptions = '';
+  if (araReceteler.length > 0 || araStok.length > 0) {
+    araOptions += '<option value="">— Ara Ürün / Yarı Mamul (opsiyonel) —</option>';
+    if (araReceteler.length > 0) {
+      araOptions += '<optgroup label="Reçete Karışımı">';
+      araReceteler.forEach(function(a) {
+        araOptions += '<option value="' + a.id + '">' + a.ad + '</option>';
+      });
+      araOptions += '</optgroup>';
+    }
+    if (araStok.length > 0) {
+      araOptions += '<optgroup label="Stokta Yarı Mamul">';
+      araStok.forEach(function(a) {
+        araOptions += '<option value="' + a.id + '">' + a.ad + '</option>';
+      });
+      araOptions += '</optgroup>';
+    }
+  }
+
+  var hmOptions = '<option value="">— Hammadde seçin —</option>';
+  hammaddeler.forEach(function(h) {
+    hmOptions += '<option value="' + h.id + '" data-birim="' + h.birim + '">' + h.ad + '</option>';
+  });
+
+  var birimOptions = '';
+  birimler.forEach(function(b) { birimOptions += '<option value="' + b + '">' + b + '</option>'; });
+
+  div.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 90px 70px 55px 32px;gap:8px;align-items:end">' +
+      '<div>' +
+        '<label style="font-size:11px;font-weight:600;color:var(--muted)">Hammadde</label>' +
+        '<select name="kalem_hammadde_' + i + '" class="form-select" onchange="birimGuncelle(this,' + i + ')">' + hmOptions + '</select>' +
+        (araOptions ? '<label style="font-size:11px;font-weight:600;color:var(--muted);margin-top:4px;display:block">Ara Ürün</label><select name="kalem_ara_' + i + '" class="form-select">' + araOptions + '</select>' : '') +
+      '</div>' +
+      '<div><label style="font-size:11px;font-weight:600;color:var(--muted)">Miktar *</label><input type="number" name="kalem_miktar_' + i + '" class="form-control" step="0.0001" min="0.0001" required placeholder="0"></div>' +
+      '<div><label style="font-size:11px;font-weight:600;color:var(--muted)">Birim</label><select name="kalem_birim_' + i + '" class="form-select">' + birimOptions + '</select></div>' +
+      '<div><label style="font-size:11px;font-weight:600;color:var(--muted)">±%</label><input type="number" name="kalem_tolerans_' + i + '" class="form-control" value="5" min="0" max="100"></div>' +
+      '<button type="button" onclick="this.closest(\'div[style]\').remove()" style="background:var(--surf2);border:1px solid var(--border);color:var(--red);border-radius:6px;cursor:pointer;padding:6px;align-self:flex-end">✕</button>' +
+    '</div>';
+
   document.getElementById('kalemler').appendChild(div);
 }
-// İlk kalem otomatik
+
+function birimGuncelle(sel, i) {
+  var opt = sel.options[sel.selectedIndex];
+  var birim = opt.getAttribute('data-birim');
+  if (birim) {
+    var birimSel = sel.form ? sel.form.querySelector('[name=kalem_birim_' + i + ']') : null;
+    if (birimSel) birimSel.value = birim;
+  }
+}
+
+// --- BAŞLANGIÇ ---
+// Varsayılan ana ürün aşamaları yükle
+asamalariYukle('hammadde');
+// Varsayılan aktif tip stilini uygula
+document.querySelector('#tipAna').style.borderColor = 'var(--green)';
+// İlk kalem
 kalemEkle();
 </script>
 {% endblock %}
