@@ -29,6 +29,19 @@
           {% if emir.baslangic %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Başlangıç</span><span>{{ emir.baslangic.strftime('%d.%m.%Y') }}</span></div>{% endif %}
         </div>
         <div class="divider"></div>
+        <!-- Durum -->
+        <form method="POST" action="/uretim/{{ emir.id }}/durum" id="durumForm">
+          <input type="hidden" name="durum" id="durumVal" value="{{ emir.durum.value }}">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+            <select id="durumSel" class="form-select" style="flex:1" onchange="document.getElementById('durumVal').value=this.value">
+              {% for d in UretimDurum %}
+              <option value="{{ d.value }}" {% if d==emir.durum %}selected{% endif %}>{{ d.value }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn-ghost" style="padding:7px 12px">↑ Güncelle</button>
+          </div>
+        </form>
+        <!-- Tamamla -->
         {% if emir.durum.value == 'tamamlandı' %}
         <div style="background:rgba(46,160,67,.1);border:1px solid rgba(46,160,67,.3);border-radius:8px;padding:12px;text-align:center;color:var(--green)">
           <i class="bi bi-check-circle-fill" style="font-size:20px"></i>
@@ -37,7 +50,7 @@
         </div>
         {% else %}
         <button type="button" class="btn-tw w-100" style="padding:10px;font-size:13px;justify-content:center"
-                data-bs-toggle="modal" data-bs-target="#modalTamamla">
+                onclick="acModalTamamla()">
           <i class="bi bi-check-circle me-2"></i>Parti No Ver & Tamamla
         </button>
         {% endif %}
@@ -484,6 +497,13 @@ function showQR(no,b64){document.getElementById('qrTitle').textContent=no;docume
 
 {% block scripts %}
 <script>
+function acModalTamamla() {
+  var el = document.getElementById('modalTamamla');
+  if (!el) { alert('Modal bulunamadı'); return; }
+  var m = bootstrap.Modal.getOrCreateInstance(el);
+  m.show();
+}
+
 // Tip seçimi
 document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
   r.addEventListener('change', function() {
