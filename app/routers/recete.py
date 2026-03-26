@@ -124,14 +124,30 @@ async def recete_kaydet(
     # Kalemleri parse et — form'dan dinamik gelir
     # Format: kalem_hammadde_0, kalem_miktar_0, kalem_birim_0, kalem_sira_0
     i = 0
-    while f"kalem_miktar_{i}" in form:
+    while f"kalem_miktar_{i}" in form or f"kalem_malzeme_{i}" in form:
+        if f"kalem_miktar_{i}" not in form:
+            i += 1
+            continue
         miktar    = float(form.get(f"kalem_miktar_{i}", 0) or 0)
         birim     = form.get(f"kalem_birim_{i}", "kg")
-        hm_id     = form.get(f"kalem_hammadde_{i}")
-        ara_id    = form.get(f"kalem_ara_{i}")
-        zorunlu   = f"kalem_zorunlu_{i}" in form
         tolerans  = float(form.get(f"kalem_tolerans_{i}", 5) or 5)
         notlar_k  = form.get(f"kalem_not_{i}", "")
+        zorunlu   = True
+
+        # Yeni format: kalem_malzeme_N = h_ID | r_ID | y_ID
+        malzeme_val = form.get(f"kalem_malzeme_{i}", "")
+        hm_id = None
+        ara_id = None
+        if malzeme_val.startswith("h_"):
+            hm_id = malzeme_val[2:]
+        elif malzeme_val.startswith("r_"):
+            ara_id = malzeme_val  # r_ prefix ile eski parser'a gönder
+        elif malzeme_val.startswith("y_"):
+            ara_id = malzeme_val  # y_ prefix
+        else:
+            # Eski format uyumluluğu
+            hm_id = form.get(f"kalem_hammadde_{i}")
+            ara_id = form.get(f"kalem_ara_{i}")
 
         # ara_id prefix: r_=recete, y_=yari_mamul (yari mamul için recete_id olarak ara_id saklıyoruz)
         _ara_recete_id = None

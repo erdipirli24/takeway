@@ -21,7 +21,7 @@
   <div class="card-body p-0">
     {% if emirler %}
     <table class="table table-hover mb-0">
-      <thead><tr><th class="ps-3">Emir No</th><th>Ürün</th><th>Hedef</th><th>Üretilen</th><th>Öncelik</th><th>Durum</th><th>Tarih</th></tr></thead>
+      <thead><tr><th class="ps-3">Emir No</th><th>Ürün</th><th>Hedef</th><th>Üretilen</th><th>Öncelik</th><th>Durum</th><th>Tarih</th><th></th></tr></thead>
       <tbody>
         {% for e in emirler %}
         <tr onclick="location.href='/uretim/{{ e.id }}'" style="cursor:pointer">
@@ -32,6 +32,13 @@
           <td><span style="font-size:12px;color:{% if e.oncelik==1 %}var(--red){% elif e.oncelik==3 %}var(--muted){% else %}var(--text){% endif %}">{% if e.oncelik==1 %}🔴 Yüksek{% elif e.oncelik==3 %}🟢 Düşük{% else %}🟡 Normal{% endif %}</span></td>
           <td><span class="badge-tw b-{{ e.durum.value }}">{{ e.durum.value }}</span></td>
           <td style="font-size:11px;color:var(--muted)">{{ e.created_at.strftime('%d.%m.%Y') }}</td>
+          <td onclick="event.stopPropagation()">
+            {% if user and (user.is_firma_admin or user.is_super) and e.durum.value in ('taslak','planlandı','iptal') %}
+            <form method="POST" action="/uretim/sil/{{ e.id }}" onsubmit="return confirm('Üretim emri iptal edilsin mi?')">
+              <button type="submit" class="btn-red" style="padding:3px 8px;font-size:11px">İptal</button>
+            </form>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>

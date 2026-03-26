@@ -45,10 +45,34 @@ def depo_tanimla(
     max_sicaklik: str = Form(""), notlar: str = Form(""),
     user: Kullanici = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    db.add(Depo(firma_id=user.firma_id, ad=ad, kod=kod or None, tip=tip,
-                adres=adres or None, min_sicaklik=safe_float(min_sicaklik),
-                max_sicaklik=safe_float(max_sicaklik), notlar=notlar or None))
+    db.add(Depo(
+        firma_id     = user.firma_id,
+        ad           = ad,
+        kod          = kod or None,
+        tip          = tip,
+        adres        = adres or None,
+        min_sicaklik = safe_float(min_sicaklik),
+        max_sicaklik = safe_float(max_sicaklik),
+        notlar       = notlar or None,
+        aktif        = True,
+    ))
     db.commit()
+    return RedirectResponse("/depo/", status_code=302)
+
+
+@router.post("/sil/{did}")
+def depo_sil(
+    did: int,
+    user: Kullanici = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Sadece firma admin silebilir."""
+    if not (user.is_firma_admin or user.is_super):
+        return RedirectResponse("/depo/", status_code=302)
+    depo = db.query(Depo).filter(Depo.id == did, Depo.firma_id == user.firma_id).first()
+    if depo:
+        depo.aktif = False
+        db.commit()
     return RedirectResponse("/depo/", status_code=302)
 
 
@@ -370,3 +394,37 @@ def hareketler(
         "DepoHareketTip": DepoHareketTip,
         "filtre_depo": depo_id, "filtre_tip": tip,
     })
+
+
+# ═══ SİLME İŞLEMLERİ (Admin Only) ═══════════════════════
+
+@router.post("/hammadde/sil/{hid}")
+def hammadde_sil(
+    hid: int,
+    user: Kullanici = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not (user.is_firma_admin or user.is_super):
+        return RedirectResponse("/depo/hammadde", status_code=302)
+    h = db.query(Hammadde).filter(Hammadde.id == hid, Hammadde.firma_id == user.firma_id).first()
+    if h:
+        h.aktif = False
+        db.commit()
+    return RedirectResponse("/depo/hammadde", status_code=302)
+
+
+@router.post("/lot/sil/{lid}")
+def lot_sil(
+    lid: int,
+    user: Kullanici = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not (user.is_firma_admin or user.is_super):
+        return RedirectResponse("/depo/stok", status_code=302)
+    from app.models.models import LotDurum
+    lot = db.query(HammaddeLot).filter(HammaddeLot.id == lid, HammaddeLot.firma_id == user.firma_id).first()
+    if lot:
+        lot.durum = LotDurum.imha
+        lot.kalan_miktar = 0
+        db.commit()
+    return RedirectResponse("/depo/stok", status_code=302)

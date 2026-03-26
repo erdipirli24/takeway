@@ -709,3 +709,24 @@ def tamamla_ve_stokla(
     db.commit()
 
     return RedirectResponse(f"/uretim/{eid}", status_code=302)
+
+
+# ═══ SİLME İŞLEMLERİ (Admin Only) ═══════════════════════
+
+@router.post("/sil/{eid}")
+def uretim_sil(
+    eid: int,
+    user: Kullanici = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Üretim emrini sil — sadece taslak/iptal olanlar silinebilir, admin only."""
+    if not (user.is_firma_admin or user.is_super):
+        return RedirectResponse("/uretim/", status_code=302)
+    emir = db.query(UretimEmri).filter(
+        UretimEmri.id == eid,
+        UretimEmri.firma_id == user.firma_id
+    ).first()
+    if emir and emir.durum.value in ('taslak', 'planlandı', 'iptal'):
+        emir.durum = UretimDurum.iptal
+        db.commit()
+    return RedirectResponse("/uretim/", status_code=302)
