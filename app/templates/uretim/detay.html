@@ -223,16 +223,19 @@
     <!-- Üretilen Partiler -->
     <div class="card mb-3">
       <div class="card-header d-flex justify-content-between">
-        <span><i class="bi bi-box-seam me-2" style="color:var(--green)"></i>Üretilen Ürün Partileri</span>
+        <span><i class="bi bi-box-seam me-2" style="color:var(--green)"></i>Üretim Sonucu</span>
         <div style="display:flex;gap:6px">
           {% set tamamlanan_say = emir.asama_kayitlari|selectattr('tamamlandi','eq',true)|list|length %}
           {% set toplam_say = emir.asama_kayitlari|length %}
-          {% if tamamlanan_say == toplam_say and toplam_say > 0 and emir.durum.value != 'tamamlandı' %}
-          <button class="btn-tw" style="font-size:12px;padding:4px 12px;background:var(--orange)" data-bs-toggle="modal" data-bs-target="#modalTamamla">
-            <i class="bi bi-check-circle me-1"></i> Üretimi Tamamla
-          </button>
+          {% if emir.durum.value != 'tamamlandı' %}
+            {% if toplam_say == 0 or tamamlanan_say == toplam_say %}
+            <button class="btn-tw" style="font-size:12px;padding:4px 14px;background:var(--green)" data-bs-toggle="modal" data-bs-target="#modalTamamla">
+              <i class="bi bi-check-circle me-1"></i> Üretimi Tamamla & Stoğa Al
+            </button>
+            {% else %}
+            <span style="font-size:12px;color:var(--muted)">{{ tamamlanan_say }}/{{ toplam_say }} aşama tamamlandı</span>
+            {% endif %}
           {% endif %}
-          <button class="btn-tw" style="font-size:12px;padding:4px 10px" data-bs-toggle="modal" data-bs-target="#modalParti">+ Parti Kaydet</button>
         </div>
       </div>
       <div class="card-body p-0">
@@ -317,28 +320,6 @@
   </form>
 </div></div></div>
 
-<div class="modal fade" id="modalParti" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-  <div class="modal-header"><h5 class="modal-title">Ürün Partisi Kaydet</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-  <form method="POST" action="/uretim/{{ emir.id }}/parti-kaydet">
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
-      <div><label class="form-label">Ürün *</label>
-        <select name="urun_id" class="form-select" required><option value="">— Seçiniz —</option>{% for u in urunler %}<option value="{{ u.id }}">{{ u.ad }}</option>{% endfor %}</select>
-      </div>
-      <div><label class="form-label">Parti No <small style="color:var(--muted)">(boş = otomatik)</small></label><input type="text" name="parti_no_giris" class="form-control" placeholder="UP-01-U001-240315-0007"></div>
-      <div class="row g-2">
-        <div class="col-6"><label class="form-label">Üretilen Miktar *</label><input type="number" name="miktar" class="form-control" step="0.001" required></div>
-        <div class="col-6"><label class="form-label">Birim</label><select name="birim" class="form-select"><option>kg</option><option>adet</option><option>paket</option><option>tepsi</option></select></div>
-      </div>
-      <div class="row g-2">
-        <div class="col-6"><label class="form-label">Üretim Tarihi</label><input type="date" name="uretim_tarihi" class="form-control"></div>
-        <div class="col-6"><label class="form-label">Son Kullanma</label><input type="date" name="son_kullanma" class="form-control"></div>
-      </div>
-      <div><label class="form-label">Depo</label><select name="depo_id" class="form-select"><option value="">— Seçiniz —</option>{% for d in depolar %}<option value="{{ d.id }}">{{ d.ad }}</option>{% endfor %}</select></div>
-      <div><label class="form-label">Not</label><textarea name="notlar" class="form-control" rows="2"></textarea></div>
-    </div>
-    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Kaydet & QR Oluştur</button></div>
-  </form>
-</div></div></div>
 
 <div class="modal fade" id="modalYariUret" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
   <div class="modal-header"><h5 class="modal-title">Yarı Mamul Üret</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
