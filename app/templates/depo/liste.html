@@ -7,7 +7,7 @@
 <div class="row g-3">
   {% for d in depolar %}
   <div class="col-md-4">
-    <div class="card h-100">
+    <div class="card h-100" onclick="location.href='/depo/{{ d.id }}'" style="cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
       <div class="card-body">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="font-size:15px;font-weight:600">{{ d.ad }}</div>

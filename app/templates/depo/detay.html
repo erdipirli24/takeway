@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}{{ depo.ad }} · Depo{% endblock %}
+{% block page_title %}{{ depo.ad }}{% endblock %}
+{% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/depo/">Depolar</a> / {{ depo.ad }}{% endblock %}
+{% block content %}
+
+<!-- Özet -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-3 col-6">
+    <div class="kpi">
+      <div class="kpi-label">Hammadde Çeşidi</div>
+      <div class="kpi-val" style="color:var(--blue)">{{ stoklar|length }}</div>
+      <div class="kpi-sub">Aktif lot</div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-6">
+    <div class="kpi">
+      <div class="kpi-label">Ara Ürün</div>
+      <div class="kpi-val" style="color:var(--orange)">{{ yari_mamuller|length }}</div>
+      <div class="kpi-sub">Stokta</div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-6">
+    <div class="kpi">
+      <div class="kpi-label">Ürün Partisi</div>
+      <div class="kpi-val" style="color:var(--green)">{{ partiler|length }}</div>
+      <div class="kpi-sub">Satışa hazır</div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-6">
+    <div class="kpi">
+      <div class="kpi-label">Depo Tipi</div>
+      <div class="kpi-val" style="font-size:16px;padding-top:4px">
+        {% if depo.tip == 'hammadde' %}🧱
+        {% elif depo.tip == 'mamul' %}📦
+        {% elif depo.tip == 'yari_mamul' %}🧩
+        {% else %}🏪{% endif %}
+      </div>
+      <div class="kpi-sub">{{ depo.tip }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+
+  <!-- Hammadde Stokları -->
+  {% if stoklar %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-boxes me-2" style="color:var(--blue)"></i>Hammadde Stokları
+      </div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th class="ps-3">Hammadde</th>
+              <th>İç Parti No</th>
+              <th>Kalan</th>
+              <th>Giriş</th>
+              <th>SKT</th>
+              <th>Durum</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in stoklar %}
+            {% set lot = s.lot %}
+            <tr onclick="location.href='/depo/lot/{{ lot.id }}'" style="cursor:pointer">
+              <td class="ps-3" style="font-weight:500">{{ lot.hammadde.ad if lot and lot.hammadde else '—' }}</td>
+              <td><code>{{ lot.ic_parti_no or lot.lot_no if lot else '—' }}</code></td>
+              <td style="font-weight:600">{{ s.miktar|fmt }} {{ lot.birim if lot else '' }}</td>
+              <td style="font-size:12px;color:var(--muted)">{{ lot.kabul_tarihi.strftime('%d.%m.%Y') if lot and lot.kabul_tarihi else '—' }}</td>
+              <td style="font-size:12px">
+                {% if lot and lot.son_kullanma %}
+                  {% set gun = (lot.son_kullanma - now).days if now is defined else 0 %}
+                  <span style="color:{{ 'var(--red)' if gun < 7 else 'var(--orange)' if gun < 30 else 'var(--text)' }}">
+                    {{ lot.son_kullanma.strftime('%d.%m.%Y') }}
+                  </span>
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                {% if lot %}
+                <span class="badge-tw b-{{ lot.durum.value }}">{{ lot.durum.value }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Ara Ürünler (Yarı Mamul) -->
+  {% if yari_mamuller %}
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-layers me-2" style="color:var(--orange)"></i>Ara Ürünler (Yarı Mamul)
+      </div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th class="ps-3">Ad</th>
+              <th>Parti</th>
+              <th>Kalan</th>
+              <th>SKT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for y in yari_mamuller %}
+            <tr>
+              <td class="ps-3" style="font-weight:500">{{ y.ad }}</td>
+              <td><code style="font-size:11px">{{ y.parti_no }}</code></td>
+              <td style="font-weight:600;color:var(--orange)">{{ y.kalan_miktar|fmt }} {{ y.birim }}</td>
+              <td style="font-size:12px">
+                {% if y.son_kullanma %}
+                  <span style="color:var(--muted)">{{ y.son_kullanma.strftime('%d.%m.%Y') }}</span>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Ürün Partileri -->
+  {% if partiler %}
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-box-seam me-2" style="color:var(--green)"></i>Ürün Partileri
+      </div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th class="ps-3">Ürün</th>
+              <th>Parti</th>
+              <th>Kalan</th>
+              <th>SKT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in partiler %}
+            <tr>
+              <td class="ps-3" style="font-weight:500">{{ p.urun.ad if p.urun else '—' }}</td>
+              <td><code style="font-size:11px">{{ p.parti_no }}</code></td>
+              <td style="font-weight:600;color:var(--green)">{{ p.kalan_miktar|fmt }} {{ p.birim }}</td>
+              <td style="font-size:12px">
+                {% if p.son_kullanma %}
+                  <span style="color:var(--muted)">{{ p.son_kullanma.strftime('%d.%m.%Y') }}</span>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not stoklar and not yari_mamuller and not partiler %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body" style="padding:48px;text-align:center;color:var(--muted)">
+        <i class="bi bi-inbox" style="font-size:40px;opacity:.3"></i>
+        <div style="margin-top:12px;font-size:15px">Bu depoda henüz ürün yok</div>
+        <div style="font-size:12px;margin-top:6px">Hammadde girişi veya üretim tamamlandığında buraya yansır</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Son Hareketler -->
+  {% if hareketler %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-arrow-left-right me-2" style="color:var(--muted)"></i>Son Hareketler
+      </div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th class="ps-3">Tarih</th>
+              <th>Lot</th>
+              <th>Tip</th>
+              <th>Miktar</th>
+              <th>Açıklama</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in hareketler %}
+            <tr>
+              <td class="ps-3" style="font-size:12px;color:var(--muted)">{{ h.tarih.strftime('%d.%m %H:%M') if h.tarih else '—' }}</td>
+              <td><code style="font-size:11px">{{ h.lot.ic_parti_no or h.lot.lot_no if h.lot else '—' }}</code></td>
+              <td><span class="badge-tw b-{{ h.tip.value }}">{{ h.tip.value }}</span></td>
+              <td style="font-weight:600">{{ h.miktar|fmt }}</td>
+              <td style="font-size:12px;color:var(--muted)">{{ h.aciklama or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

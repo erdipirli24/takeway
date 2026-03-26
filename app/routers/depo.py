@@ -281,6 +281,57 @@ def stok(
 
 # ═══ LOT DETAY ═══════════════════════════════════════════
 
+
+@router.get("/{did}", response_class=HTMLResponse)
+def depo_detay(
+    did: int,
+    request: Request,
+    user: Kullanici = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    depo = db.query(Depo).filter(Depo.id == did, Depo.firma_id == user.firma_id).first()
+    if not depo:
+        return RedirectResponse("/depo/", status_code=302)
+
+    # Bu depodaki aktif stoklar
+    stoklar = db.query(DepoStok).filter(
+        DepoStok.depo_id == did,
+        DepoStok.miktar > 0
+    ).all()
+
+    # Bu depodaki son hareketler
+    hareketler = db.query(DepoHareket).filter(
+        DepoHareket.depo_id == did
+    ).order_by(DepoHareket.tarih.desc()).limit(20).all()
+
+    # Yarı mamuller
+    from app.models.models import YariMamul, YariMamulDurum
+    yari_mamuller = db.query(YariMamul).filter(
+        YariMamul.depo_id == did,
+        YariMamul.firma_id == user.firma_id,
+        YariMamul.durum == YariMamulDurum.stokta,
+        YariMamul.kalan_miktar > 0
+    ).all()
+
+    # Ürün partileri
+    from app.models.models import UrunParti
+    partiler = db.query(UrunParti).filter(
+        UrunParti.depo_id == did,
+        UrunParti.firma_id == user.firma_id,
+        UrunParti.kalan_miktar > 0
+    ).all()
+
+    from datetime import datetime, timezone
+    return templates.TemplateResponse("depo/detay.html", {
+        "request": request, "user": user,
+        "depo": depo,
+        "stoklar": stoklar,
+        "hareketler": hareketler,
+        "yari_mamuller": yari_mamuller,
+        "partiler": partiler,
+        "now": datetime.now(timezone.utc),
+    })
+
 @router.get("/lot/{lid}", response_class=HTMLResponse)
 def lot_detay(lid: int, request: Request, user: Kullanici = Depends(get_current_user), db: Session = Depends(get_db)):
     lot = db.query(HammaddeLot).filter(HammaddeLot.id == lid, HammaddeLot.firma_id == user.firma_id).first()
