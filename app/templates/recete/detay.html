@@ -65,9 +65,12 @@
                   {{ k.hammadde.ad }}
                   {% if k.hammadde.alerjenler %}{% for a in k.hammadde.alerjen_listesi %}<span class="alerjen-tag">{{ a }}</span>{% endfor %}{% endif %}
                 {% elif k.ara_urun_recete %}
-                  <span style="color:var(--purple)"><i class="bi bi-layers me-1"></i>{{ k.ara_urun_recete.ad }}</span> <small style="color:var(--muted)">(ara ürün)</small>
+                  <span style="color:var(--purple)"><i class="bi bi-layers me-1"></i>{{ k.ara_urun_recete.ad }}</span> <small style="color:var(--muted)">(reçete karışım)</small>
+                {% elif k.notlar and k.notlar.startswith('ym:') %}
+                  {% set ym_id = k.notlar.split(':')[1].split(' ')[0] %}
+                  <span style="color:var(--orange)"><i class="bi bi-layers-half me-1"></i>Yarı Mamul #{{ ym_id }}</span> <small style="color:var(--muted)">(stok)</small>
                 {% endif %}
-                {% if k.notlar %}<div style="font-size:11px;color:var(--muted)">{{ k.notlar }}</div>{% endif %}
+                {% if k.notlar and not k.notlar.startswith('ym:') %}<div style="font-size:11px;color:var(--muted)">{{ k.notlar }}</div>{% endif %}
               </td>
               <td style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ k.miktar|fmt }}</td>
               <td>{{ k.birim }}</td>

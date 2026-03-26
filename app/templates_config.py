@@ -19,3 +19,23 @@ def fmt_sayi(val):
 
 
 templates.env.filters["fmt"] = fmt_sayi
+
+
+def safe_float(val, default=None):
+    """Boş string veya None gelince default döner."""
+    if val is None or str(val).strip() == "":
+        return default
+    try:
+        return float(str(val).replace(",", "."))
+    except (ValueError, TypeError):
+        return default
+
+
+def safe_int(val, default=None):
+    """Boş string veya None gelince default döner."""
+    if val is None or str(val).strip() == "":
+        return default
+    try:
+        return int(str(val).strip())
+    except (ValueError, TypeError):
+        return default

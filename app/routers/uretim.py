@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from app.templates_config import templates
+from app.templates_config import templates, safe_float, safe_int
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
@@ -193,6 +193,14 @@ def emir_detay(
     hammaddeler = db.query(Hammadde).filter(Hammadde.firma_id == user.firma_id, Hammadde.aktif == True).all()
     depolar     = db.query(Depo).filter(Depo.firma_id == user.firma_id, Depo.aktif == True).all()
     urunler     = db.query(Urun).filter(Urun.firma_id == user.firma_id, Urun.aktif == True).all()
+    # Yarı mamul üretimi için tüm karışım reçeteleri
+    from app.models.models import ReceteTip as _RT
+    receteler_karisim = db.query(Recete).filter(
+        Recete.firma_id == user.firma_id,
+        Recete.tip == _RT.karisim,
+        Recete.onaylandi == True,
+        Recete.aktif == True
+    ).order_by(Recete.ad).all()
 
     return templates.TemplateResponse("uretim/detay.html", {
         "request": request, "user": user,
@@ -205,6 +213,7 @@ def emir_detay(
         "hammaddeler": hammaddeler,
         "depolar": depolar,
         "urunler": urunler,
+        "receteler": receteler_karisim,
         "UretimDurum": UretimDurum,
         "MacineDurum": MacineDurum,
         "hata": hata,
@@ -462,7 +471,7 @@ def yari_uret(
         uretim_miktari = miktar,
         kalan_miktar   = miktar,
         birim          = birim,
-        raf_omru_gun   = raf_omru_gun,
+        raf_omru_gun   = safe_int(raf_omru_gun),
         son_kullanma   = son_kullanma,
         depo_id        = depo_id or None,
         qr_data        = qr,

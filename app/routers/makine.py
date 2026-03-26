@@ -119,7 +119,7 @@ def bakim_ekle(
     tip: str = Form("Periyodik"),
     aciklama: str = Form(""),
     yapan: str = Form(""),
-    maliyet: Optional[float] = Form(None),
+    maliyet: str = Form(""),
     sonraki_bakim: Optional[str] = Form(None),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -137,7 +137,7 @@ def bakim_ekle(
             tip        = tip,
             aciklama   = aciklama or None,
             yapan      = yapan or None,
-            maliyet    = maliyet,
+            maliyet    = safe_float(maliyet),
             created_by = user.id,
         ))
         m.son_bakim     = datetime.now(timezone.utc)

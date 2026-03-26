@@ -149,7 +149,7 @@ def kalem_ekle(
     aciklama: str = Form(""),
     miktar: float = Form(...),
     birim: str = Form("kg"),
-    birim_fiyat: Optional[float] = Form(None),
+    birim_fiyat: str = Form(""),
     kdv_oran: float = Form(10),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -162,7 +162,7 @@ def kalem_ekle(
         aciklama      = aciklama or None,
         miktar        = miktar,
         birim         = birim,
-        birim_fiyat   = birim_fiyat,
+        birim_fiyat   = safe_float(birim_fiyat),
         kdv_oran      = kdv_oran,
         toplam        = round(toplam, 2) if birim_fiyat else None,
     ))

@@ -77,7 +77,7 @@ def sikayet_ekle(
     uretim_emri_id: Optional[int] = Form(None),
     urun_parti_id: Optional[int] = Form(None),
     is_recall: Optional[str] = Form(None),
-    etkilenen_miktar: Optional[float] = Form(None),
+    etkilenen_miktar: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -95,7 +95,7 @@ def sikayet_ekle(
         uretim_emri_id   = uretim_emri_id or None,
         urun_parti_id    = urun_parti_id or None,
         is_recall        = recall_flag,
-        etkilenen_miktar = etkilenen_miktar,
+        etkilenen_miktar = safe_float(etkilenen_miktar),
         durum            = SikayetDurum.recall if recall_flag else SikayetDurum.acik,
         created_by       = user.id,
     )
@@ -146,7 +146,7 @@ def sikayet_guncelle(
     durum: str = Form(...),
     kok_neden: str = Form(""),
     duzeltici_eylem: str = Form(""),
-    geri_cagrilan: Optional[float] = Form(None),
+    geri_cagrilan: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):

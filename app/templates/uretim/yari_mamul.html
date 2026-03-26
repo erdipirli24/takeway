@@ -11,13 +11,14 @@
   <div class="card-body p-0">
     {% if yari_mamuller %}
     <table class="table mb-0">
-      <thead><tr><th class="ps-3">Parti No</th><th>Ad</th><th>Kalan</th><th>Raf Ömrü</th><th>SKT</th><th>Durum</th></tr></thead>
+      <thead><tr><th class="ps-3">Parti No</th><th>Ad</th><th>Reçete</th><th>Kalan</th><th>Raf Ömrü</th><th>SKT</th><th>Durum</th></tr></thead>
       <tbody>
         {% for ym in yari_mamuller %}
         {% set kalan_saat = ((ym.son_kullanma - now).total_seconds() / 3600)|int if ym.son_kullanma and ym.durum.value == 'stokta' else 0 %}
         <tr>
           <td class="ps-3"><code>{{ ym.parti_no }}</code></td>
           <td style="font-weight:500">{{ ym.ad }}</td>
+          <td style="font-size:12px;color:var(--muted)">{{ ym.recete.ad if ym.recete else '—' }}</td>
           <td style="font-family:'JetBrains Mono',monospace">{{ ym.kalan_miktar|fmt }} / {{ ym.uretim_miktari|fmt }} {{ ym.birim }}</td>
           <td style="font-size:12px">{{ ym.raf_omru_gun }} gün</td>
           <td>

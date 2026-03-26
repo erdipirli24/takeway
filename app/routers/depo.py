@@ -41,13 +41,13 @@ def depo_listesi(request: Request, user: Kullanici = Depends(get_current_user), 
 @router.post("/tanimla")
 def depo_tanimla(
     ad: str = Form(...), kod: str = Form(""), tip: str = Form("hammadde"),
-    adres: str = Form(""), min_sicaklik: Optional[float] = Form(None),
-    max_sicaklik: Optional[float] = Form(None), notlar: str = Form(""),
+    adres: str = Form(""), min_sicaklik: str = Form(""),
+    max_sicaklik: str = Form(""), notlar: str = Form(""),
     user: Kullanici = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     db.add(Depo(firma_id=user.firma_id, ad=ad, kod=kod or None, tip=tip,
-                adres=adres or None, min_sicaklik=min_sicaklik,
-                max_sicaklik=max_sicaklik, notlar=notlar or None))
+                adres=adres or None, min_sicaklik=safe_float(min_sicaklik),
+                max_sicaklik=safe_float(max_sicaklik), notlar=notlar or None))
     db.commit()
     return RedirectResponse("/depo/", status_code=302)
 
@@ -132,7 +132,7 @@ def giris_kaydet(
     lot_no: str = Form(...),
     ic_parti: Optional[str] = Form(None),
     miktar: float = Form(...),
-    birim_fiyat: Optional[float] = Form(None),
+    birim_fiyat: str = Form(""),
     para_birimi: str = Form("TRY"),
     uretim_tarihi: Optional[str] = Form(None),
     son_kullanma: Optional[str] = Form(None),
@@ -178,7 +178,7 @@ def giris_kaydet(
         giris_miktar = miktar,
         kalan_miktar = miktar,
         birim        = hm.birim,
-        birim_fiyat  = birim_fiyat,
+        birim_fiyat  = safe_float(birim_fiyat),
         para_birimi  = para_birimi,
         durum        = baslangic_durum,
         uretim_tarihi = _parse_dt(uretim_tarihi),

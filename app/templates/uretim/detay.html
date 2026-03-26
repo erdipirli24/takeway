@@ -334,7 +334,12 @@
   <form method="POST" action="/uretim/{{ emir.id }}/yari-uret">
     <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
       <div><label class="form-label">Bağlı Reçete *</label>
-        <select name="recete_id" class="form-select" required><option value="">— Seçiniz —</option>{% for r in (emir.recete.kalemler|map(attribute='ara_urun_recete')|select|list if emir.recete else []) %}<option value="{{ r.id }}">{{ r.ad }}</option>{% endfor %}{% if not emir.recete %}<option value="1">Reçete seçmek için önce emre reçete bağlayın</option>{% endif %}</select>
+        <select name="recete_id" class="form-select" required>
+          <option value="">— Seçiniz —</option>
+          {% for r in receteler %}
+          <option value="{{ r.id }}">{{ r.ad }} (v{{ r.versiyon }})</option>
+          {% endfor %}
+        </select>
       </div>
       <div><label class="form-label">Ara Ürün Adı *</label><input type="text" name="ad" class="form-control" placeholder="Temel Kurabiye Hamuru" required></div>
       <div class="row g-2">

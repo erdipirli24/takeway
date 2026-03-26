@@ -237,7 +237,7 @@ def kalibrasyon_ekle(
     gecerlilik_bitis: str = Form(...),
     sonuc: str = Form(""),
     belge_no: str = Form(""),
-    maliyet: Optional[float] = Form(None),
+    maliyet: str = Form(""),
     notlar: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -256,7 +256,7 @@ def kalibrasyon_ekle(
         durum            = KalibrasyonDurum.gecerli,
         sonuc            = sonuc or None,
         belge_no         = belge_no or None,
-        maliyet          = maliyet,
+        maliyet          = safe_float(maliyet),
         notlar           = notlar or None,
         created_by       = user.id,
     ))

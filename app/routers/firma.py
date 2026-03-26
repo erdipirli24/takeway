@@ -139,8 +139,8 @@ def ayarlar(request: Request, user: Kullanici = Depends(get_current_user), db: S
 def birim_ekle(
     ad: str = Form(...),
     kisaltma: str = Form(""),
-    kg_karsiligi: Optional[float] = Form(None),
-    adet_karsiligi: Optional[float] = Form(None),
+    kg_karsiligi: str = Form(""),
+    adet_karsiligi: str = Form(""),
     aciklama: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -149,8 +149,8 @@ def birim_ekle(
         firma_id       = user.firma_id,
         ad             = ad,
         kisaltma       = kisaltma or None,
-        kg_karsiligi   = kg_karsiligi,
-        adet_karsiligi = adet_karsiligi,
+        kg_karsiligi   = safe_float(kg_karsiligi),
+        adet_karsiligi = safe_float(adet_karsiligi),
         aciklama       = aciklama or None,
     )
     db.add(b); db.commit()

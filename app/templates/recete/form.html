@@ -56,9 +56,23 @@
 
 <script>
 const hammaddeler = [{% for h in hammaddeler %}{"id":{{ h.id }},"ad":"{{ h.ad }}","birim":"{{ h.birim }}"},{% endfor %}];
-const araUrunler  = [{% for a in ara_urunler %}{"id":{{ a.id }},"ad":"{{ a.ad }}"},{% endfor %}];
+// Reçete tabanlı ara ürünler (karisim tipi onaylı reçeteler)
+const araUrunRecete = [{% for a in ara_urunler %}{"id":"r_{{ a.id }}","ad":"{{ a.ad }} (reçete)"},{% endfor %}];
+// Stokta mevcut yarı mamuller
+const araUrunStok   = [{% for y in yari_mamuller %}{"id":"y_{{ y.id }}","ad":"{{ y.ad }} — {{ y.kalan_miktar|fmt }} {{ y.birim }} (stok)"},{% endfor %}];
+const araUrunler    = [...araUrunRecete, ...araUrunStok];
 const birimler    = {{ birimler|tojson }};
 let kalemSayisi   = 0;
+
+function araSecildi(sel, i) {
+  // r_ prefix = reçete, y_ prefix = yarı mamul
+  const val = sel.value;
+  const tip = val.startsWith('y_') ? 'yari_mamul' : 'recete';
+  const el = document.getElementById('kalem_ara_tip_' + i);
+  if (el) el.value = tip;
+  // Gerçek ID'yi hidden input'a yaz
+  sel.value = val; // r_5 veya y_3 olarak kalacak, backend parse edecek
+}
 
 function kalemEkle(){
   const i = kalemSayisi++;
@@ -71,7 +85,7 @@ function kalemEkle(){
         <option value="">— Hammadde —</option>
         ${hammaddeler.map(h=>`<option value="${h.id}" data-birim="${h.birim}">${h.ad}</option>`).join('')}
       </select>
-      ${araUrunler.length ? `<select name="kalem_ara_${i}" class="form-select" style="margin-top:4px"><option value="">— Ara Ürün —</option>${araUrunler.map(a=>`<option value="${a.id}">${a.ad}</option>`).join('')}</select>` : ''}
+      ${araUrunler.length ? `<select name="kalem_ara_${i}" class="form-select" style="margin-top:4px" onchange="araSecildi(this,${i})"><option value="">— Ara Ürün / Yarı Mamul —</option><optgroup label="Reçete (Karışım)">${araUrunRecete.map(a=>\`<option value="\${a.id}">\${a.ad}</option>\`).join('')}</optgroup><optgroup label="Stokta Yarı Mamul">${araUrunStok.map(a=>\`<option value="\${a.id}">\${a.ad}</option>\`).join('')}</optgroup></select><input type="hidden" name="kalem_ara_tip_${i}" id="kalem_ara_tip_${i}">` : ''}
     </div>
     <div><label style="font-size:11px;color:var(--muted);font-weight:500">Miktar *</label><input type="number" name="kalem_miktar_${i}" class="form-control" step="0.0001" required></div>
     <div><label style="font-size:11px;color:var(--muted);font-weight:500">Birim</label>

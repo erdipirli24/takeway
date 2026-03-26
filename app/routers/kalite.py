@@ -61,8 +61,8 @@ def ccp_ekle(
     ad: str = Form(...),
     kategori: str = Form(...),
     aciklama: str = Form(""),
-    kritik_limit_min: Optional[float] = Form(None),
-    kritik_limit_max: Optional[float] = Form(None),
+    kritik_limit_min: str = Form(""),
+    kritik_limit_max: str = Form(""),
     hedef_deger: str = Form(""),
     birim: str = Form(""),
     olcum_yontemi: str = Form(""),
@@ -74,8 +74,8 @@ def ccp_ekle(
     db.add(CCPTanim(
         firma_id=user.firma_id, ad=ad, kategori=kategori,
         aciklama=aciklama or None,
-        kritik_limit_min=kritik_limit_min,
-        kritik_limit_max=kritik_limit_max,
+        kritik_limit_min=safe_float(kritik_limit_min),
+        kritik_limit_max=safe_float(kritik_limit_max),
         hedef_deger=hedef_deger or None,
         birim=birim or None,
         olcum_yontemi=olcum_yontemi or None,
@@ -189,7 +189,7 @@ def temizlik_plan_ekle(
     yontem: str = Form(""),
     kullanilan_kimyasal: str = Form(""),
     siklık: str = Form("Günlük"),
-    tahmini_sure: Optional[int] = Form(None),
+    tahmini_sure: str = Form(""),
     sorumlu_unvan: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -198,7 +198,7 @@ def temizlik_plan_ekle(
         firma_id=user.firma_id, ad=ad, alan=alan or None,
         yontem=yontem or None,
         kullanilan_kimyasal=kullanilan_kimyasal or None,
-        siklık=siklık, tahmini_sure=tahmini_sure,
+        siklık=siklık, tahmini_sure=safe_int(tahmini_sure),
         sorumlu_unvan=sorumlu_unvan or None,
     ))
     db.commit()

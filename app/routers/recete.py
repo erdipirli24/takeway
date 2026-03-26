@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from app.templates_config import templates
+from app.templates_config import templates, safe_float, safe_int
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime, timezone
@@ -9,7 +9,8 @@ from app.database import get_db
 from app.auth import get_current_user
 from app.models.models import (
     Kullanici, Recete, ReceteKalem, ReceteTip,
-    Hammadde, Urun, BirimTanim, Modul
+    Hammadde, Urun, BirimTanim, Modul,
+    YariMamul, YariMamulDurum
 )
 from app.auth import kullanici_yetki
 
@@ -64,6 +65,7 @@ def recete_yeni_form(
         "urunler":     db.query(Urun).filter(Urun.firma_id == fid, Urun.aktif == True).all(),
         "hammaddeler": db.query(Hammadde).filter(Hammadde.firma_id == fid, Hammadde.aktif == True).order_by(Hammadde.ad).all(),
         "ara_urunler": db.query(Recete).filter(Recete.firma_id == fid, Recete.tip == ReceteTip.karisim, Recete.onaylandi == True, Recete.aktif == True).all(),
+        "yari_mamuller": db.query(YariMamul).filter(YariMamul.firma_id == fid, YariMamul.durum == YariMamulDurum.stokta, YariMamul.kalan_miktar > 0).order_by(YariMamul.ad).all(),
         "birimler":    _birimleri_getir(db, fid),
         "ReceteTip":   ReceteTip,
         "recete":      None,
@@ -78,7 +80,7 @@ async def recete_kaydet(
     urun_id: Optional[int] = Form(None),
     baz_miktar: float = Form(1),
     baz_birim: str = Form("kg"),
-    baz_kg_karsiligi: Optional[float] = Form(None),
+    baz_kg_karsiligi: str = Form(""),
     notlar: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -97,6 +99,12 @@ async def recete_kaydet(
     ).order_by(Recete.versiyon.desc()).first()
     versiyon = (onceki.versiyon + 1) if onceki else 1
 
+    # Güvenli float dönüşüm
+    _baz_kg = None
+    if baz_kg_karsiligi and baz_kg_karsiligi.strip():
+        try: _baz_kg = float(baz_kg_karsiligi.replace(",", "."))
+        except: _baz_kg = None
+
     recete = Recete(
         firma_id          = fid,
         urun_id           = urun_id or None,
@@ -106,7 +114,7 @@ async def recete_kaydet(
         aktif             = True,
         baz_miktar        = baz_miktar,
         baz_birim         = baz_birim,
-        baz_kg_karsiligi  = baz_kg_karsiligi,
+        baz_kg_karsiligi  = _baz_kg,
         notlar            = notlar or None,
         onaylandi         = False,
         created_by        = user.id,
@@ -125,11 +133,29 @@ async def recete_kaydet(
         tolerans  = float(form.get(f"kalem_tolerans_{i}", 5) or 5)
         notlar_k  = form.get(f"kalem_not_{i}", "")
 
-        if miktar > 0 and (hm_id or ara_id):
+        # ara_id prefix: r_=recete, y_=yari_mamul (yari mamul için recete_id olarak ara_id saklıyoruz)
+        _ara_recete_id = None
+        if ara_id and ara_id.strip():
+            raw = ara_id.strip()
+            if raw.startswith('r_'):
+                try: _ara_recete_id = int(raw[2:])
+                except: pass
+            elif raw.startswith('y_'):
+                # Yarı mamul — şimdilik recete_id olarak sakla, negatif id ile ayırt et
+                # Gerçek çözüm: notlar'a "ym:ID" yaz
+                try:
+                    ym_id = int(raw[2:])
+                    notlar_k = f"ym:{ym_id}" + (f" {notlar_k}" if notlar_k else "")
+                except: pass
+            else:
+                try: _ara_recete_id = int(raw)
+                except: pass
+
+        if miktar > 0 and (hm_id or _ara_recete_id or (notlar_k and notlar_k.startswith('ym:'))):
             db.add(ReceteKalem(
                 recete_id          = recete.id,
                 hammadde_id        = int(hm_id) if hm_id else None,
-                ara_urun_recete_id = int(ara_id) if ara_id else None,
+                ara_urun_recete_id = _ara_recete_id,
                 sira               = i + 1,
                 miktar             = miktar,
                 birim              = birim,
@@ -226,7 +252,7 @@ def urun_ekle(
     db.add(Urun(
         firma_id=user.firma_id, ad=ad, kod=kod or None,
         barkod=barkod or None, birim=birim, kdv_oran=kdv_oran,
-        raf_omru_gun=raf_omru_gun, aciklama=aciklama or None
+        raf_omru_gun=safe_int(raf_omru_gun), aciklama=aciklama or None
     ))
     db.commit()
     return RedirectResponse("/recete/urun/liste", status_code=302)
