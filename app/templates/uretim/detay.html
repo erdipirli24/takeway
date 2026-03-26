@@ -225,16 +225,10 @@
       <div class="card-header d-flex justify-content-between">
         <span><i class="bi bi-box-seam me-2" style="color:var(--green)"></i>Üretim Sonucu</span>
         <div style="display:flex;gap:6px">
-          {% set tamamlanan_say = emir.asama_kayitlari|selectattr('tamamlandi','eq',true)|list|length %}
-          {% set toplam_say = emir.asama_kayitlari|length %}
           {% if emir.durum.value != 'tamamlandı' %}
-            {% if toplam_say == 0 or tamamlanan_say == toplam_say %}
-            <button class="btn-tw" style="font-size:12px;padding:4px 14px;background:var(--green)" data-bs-toggle="modal" data-bs-target="#modalTamamla">
-              <i class="bi bi-check-circle me-1"></i> Üretimi Tamamla & Stoğa Al
-            </button>
-            {% else %}
-            <span style="font-size:12px;color:var(--muted)">{{ tamamlanan_say }}/{{ toplam_say }} aşama tamamlandı</span>
-            {% endif %}
+          <button class="btn-tw" style="font-size:12px;padding:4px 14px;background:var(--green)" data-bs-toggle="modal" data-bs-target="#modalTamamla">
+            <i class="bi bi-check-circle me-1"></i> Üretimi Tamamla & Stoğa Al
+          </button>
           {% endif %}
         </div>
       </div>
@@ -459,15 +453,32 @@ function showQR(no,b64){document.getElementById('qrTitle').textContent=no;docume
   </form>
 </div></div></div>
 
+{% block scripts %}
 <script>
-document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
-  r.addEventListener('change', function() {
-    document.querySelectorAll('#tipAraUrun,#tipAnaUrun').forEach(function(el) { el.style.borderColor='var(--border)'; });
-    this.closest('label').style.borderColor = this.value==='ara' ? 'var(--orange)' : 'var(--green)';
-    document.getElementById('rafOmruDiv').style.display = this.value==='ara' ? '' : 'none';
-    document.getElementById('sktDiv').style.display = this.value==='ana' ? '' : 'none';
+// Üretimi Tamamla modal — tip seçimi
+document.addEventListener('DOMContentLoaded', function() {
+  var radios = document.querySelectorAll('input[name=urun_tipi]');
+  radios.forEach(function(r) {
+    r.addEventListener('change', function() {
+      var araLabel = document.getElementById('tipAraUrun');
+      var anaLabel = document.getElementById('tipAnaUrun');
+      if (araLabel) araLabel.style.borderColor = 'var(--border)';
+      if (anaLabel) anaLabel.style.borderColor = 'var(--border)';
+      var lbl = this.closest('label');
+      if (lbl) lbl.style.borderColor = this.value === 'ara' ? 'var(--orange)' : 'var(--green)';
+      var raf = document.getElementById('rafOmruDiv');
+      var skt = document.getElementById('sktDiv');
+      if (raf) raf.style.display = this.value === 'ara' ? '' : 'none';
+      if (skt) skt.style.display = this.value === 'ana' ? '' : 'none';
+    });
   });
+  // Default: ana ürün
+  var anaLabel = document.getElementById('tipAnaUrun');
+  if (anaLabel) anaLabel.style.borderColor = 'var(--green)';
+  var raf = document.getElementById('rafOmruDiv');
+  var skt = document.getElementById('sktDiv');
+  if (raf) raf.style.display = 'none';
+  if (skt) skt.style.display = '';
 });
-document.querySelector('#tipAnaUrun').style.borderColor = 'var(--green)';
 </script>
-
+{% endblock %}
