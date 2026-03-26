@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 
@@ -12,7 +12,6 @@ from app.models.models import (
 )
 
 router = APIRouter(tags=["dashboard"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def firma_id_listesi(user: Kullanici, db: Session):

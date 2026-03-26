@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime, timezone
@@ -14,7 +14,6 @@ from app.models.models import (
 from app.auth import kullanici_yetki
 
 router = APIRouter(prefix="/recete", tags=["recete"])
-templates = Jinja2Templates(directory="app/templates")
 
 SISTEM_BIRIMLERI = ["kg", "g", "lt", "ml", "adet"]
 

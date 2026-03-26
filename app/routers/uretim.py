@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
@@ -19,7 +19,6 @@ from app.utils.fifo import fifo_cek, toplam_stok
 from app.utils.helpers import qr_olustur
 
 router = APIRouter(prefix="/uretim", tags=["uretim"])
-templates = Jinja2Templates(directory="app/templates")
 
 VARSAYILAN_ASAMALAR = [
     "Hammadde Kabulü & Tartım",

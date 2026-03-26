@@ -9,7 +9,7 @@ Sahadaki operatörler için sade, dokunmatik-öncelikli arayüz.
 """
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime, timezone
@@ -24,7 +24,6 @@ from app.utils.fifo import fifo_sirala
 from decimal import Decimal
 
 router = APIRouter(prefix="/mobil", tags=["mobil"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 # ═══ MOBİL ANA SAYFA ════════════════════════════════════

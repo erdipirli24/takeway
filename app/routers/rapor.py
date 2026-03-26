@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from typing import Optional
@@ -18,7 +18,6 @@ from app.models.models import (
 )
 
 router = APIRouter(prefix="/rapor", tags=["rapor"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _now():

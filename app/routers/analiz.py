@@ -7,7 +7,7 @@ Faz 4 — Analiz & Akıllı Özellikler
 """
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional, List
@@ -25,7 +25,6 @@ from app.models.models import (
 )
 
 router = APIRouter(prefix="/analiz", tags=["analiz"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _now():

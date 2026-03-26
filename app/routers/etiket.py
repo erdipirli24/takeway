@@ -5,7 +5,7 @@ Yazdır butonuna basılınca tarayıcı print dialog'u açar.
 """
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime, timezone
@@ -18,7 +18,6 @@ from app.models.models import (
 )
 
 router = APIRouter(prefix="/etiket", tags=["etiket"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/", response_class=HTMLResponse)

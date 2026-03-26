@@ -9,7 +9,7 @@ Sistem Yönetimi
 import secrets
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import Optional
@@ -26,7 +26,6 @@ from app.models.models import (
 from app.utils.bildirim import tum_kontrolleri_calistir, okunmamis_sayisi
 
 router = APIRouter(prefix="/sistem", tags=["sistem"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 # ═══ PERFORMANS DASHBOARD ════════════════════════════════

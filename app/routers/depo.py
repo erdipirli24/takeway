@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional
@@ -19,7 +19,6 @@ from app.utils.fifo import lot_giris_kaydet, fifo_sirala, toplam_stok
 from app.utils.helpers import qr_olustur, ic_parti_no, numune_no
 
 router = APIRouter(prefix="/depo", tags=["depo"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _parse_dt(s):

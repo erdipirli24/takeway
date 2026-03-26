@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -10,7 +10,6 @@ from app.models.models import Firma, Kullanici, FirmaTip, BirimTanim
 from app.utils.helpers import firma_kodu_olustur
 
 router = APIRouter(prefix="/firma", tags=["firma"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 # ─── FİRMA PANELİ (süper admin) ──────────────────────────

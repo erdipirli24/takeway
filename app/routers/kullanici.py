@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -9,7 +9,6 @@ from app.auth import get_current_user, hash_password, tum_yetkiler_olustur
 from app.models.models import Kullanici, KullaniciYetki, Modul
 
 router = APIRouter(prefix="/kullanici", tags=["kullanici"])
-templates = Jinja2Templates(directory="app/templates")
 
 MODUL_ETIKETLER = {
     Modul.dashboard:       "Dashboard",

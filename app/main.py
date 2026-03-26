@@ -161,19 +161,6 @@ def _seed():
 
 app = FastAPI(title="TraceWay", version="2.0.0", lifespan=lifespan)
 
-# Jinja2 fmt filtresi — 40.000 yerine 40 göster
-from fastapi.templating import Jinja2Templates as _JT
-def _fmt(val):
-    try:
-        f = float(val or 0)
-        return str(int(f)) if f == int(f) else f"{f:.3f}".rstrip("0").rstrip(".")
-    except:
-        return str(val or 0)
-_orig = _JT.__init__
-def _pinit(self, *a, **kw):
-    _orig(self, *a, **kw)
-    self.env.filters["fmt"] = _fmt
-_JT.__init__ = _pinit
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(auth.router)

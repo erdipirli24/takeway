@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 import os
@@ -10,7 +10,6 @@ from app.models.models import Kullanici
 from app.auth import verify_password, create_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-templates = Jinja2Templates(directory="app/templates")
 
 # Railway HTTPS'de çalışıyor — secure=True zorunlu
 IS_PRODUCTION = os.environ.get("DATABASE_URL", "").startswith("postgresql")
