@@ -36,12 +36,28 @@
             <option value="{{ d.value }}" {% if d==emir.durum %}selected{% endif %}>{{ d.value }}</option>
             {% endfor %}
           </select>
-          <button type="button" class="btn-tw" id="durumBtn" onclick="durumGuncelle()">↑</button>
+          <button type="button" class="btn-tw" id="durumBtn">↑</button>
         </div>
-        <!-- Gizli normal form (tamamlandı olmayan durumlar için) -->
         <form method="POST" action="/uretim/{{ emir.id }}/durum" id="normalDurumForm" style="display:none">
           <input type="hidden" name="durum" id="normalDurumVal">
         </form>
+        <script>
+        // Inline — Bootstrap yüklendikten hemen sonra çalışsın
+        document.getElementById('durumBtn').addEventListener('click', function() {
+          var durum = document.getElementById('durumSel').value;
+          if (durum === 'tamamlandı') {
+            var el = document.getElementById('modalTamamla');
+            if (el && typeof bootstrap !== 'undefined') {
+              new bootstrap.Modal(el).show();
+            } else {
+              alert('Modal yüklenemedi, sayfayı yenileyip tekrar deneyin.');
+            }
+          } else {
+            document.getElementById('normalDurumVal').value = durum;
+            document.getElementById('normalDurumForm').submit();
+          }
+        });
+        </script>
       </div>
     </div>
 
@@ -474,19 +490,6 @@ function showQR(no,b64){document.getElementById('qrTitle').textContent=no;docume
 
 {% block scripts %}
 <script>
-function durumGuncelle() {
-  var durum = document.getElementById('durumSel').value;
-  if (durum === 'tamamlandı') {
-    // Depo seçimi modal'ı aç
-    var modal = new bootstrap.Modal(document.getElementById('modalTamamla'));
-    modal.show();
-  } else {
-    // Normal form submit
-    document.getElementById('normalDurumVal').value = durum;
-    document.getElementById('normalDurumForm').submit();
-  }
-}
-
 // Tip seçimi — ara/ana
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
