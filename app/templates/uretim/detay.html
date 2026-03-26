@@ -82,7 +82,14 @@
     <!-- Reçete Kalemleri -->
     {% if recete_kalemleri %}
     <div class="card mb-3">
-      <div class="card-header"><i class="bi bi-journal-text me-2" style="color:var(--purple)"></i>Reçete Gereksinimleri ({{ emir.hedef_miktar|fmt }} {{ emir.hedef_birim }})</div>
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-journal-text me-2" style="color:var(--purple)"></i>Reçete Gereksinimleri ({{ emir.hedef_miktar|fmt }} {{ emir.hedef_birim }})</span>
+        <form method="POST" action="/uretim/{{ emir.id }}/fifo-oto" style="margin:0">
+          <button type="submit" class="btn-tw" style="font-size:12px;padding:4px 12px;background:var(--purple)" onclick="return confirm('Reçetedeki tüm hammaddeler otomatik FIFO ile çekilecek. Onaylıyor musunuz?')">
+            <i class="bi bi-magic me-1"></i> Tümünü Otomatik Çek
+          </button>
+        </form>
+      </div>
       <div class="card-body p-0">
         <table class="table mb-0">
           <thead><tr><th class="ps-3">Hammadde</th><th>Gereken</th><th>Stokta</th><th>Durum</th></tr></thead>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr" data-theme="dark">
+<html lang="tr" data-theme="light">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{% block title %}TraceWay{% endblock %}</title>
@@ -134,6 +134,13 @@
     @media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
   </style>
   {% block head %}{% endblock %}
+  <script>
+    // Flash engelle: tema CSS yüklenmeden önce uygula
+    (function(){
+      var t = localStorage.getItem('tw_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 </head>
 <body>
 
@@ -249,7 +256,7 @@ function setTheme(t){
   icon.className = t==='dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
   localStorage.setItem('tw_theme',t);
 }
-setTheme(localStorage.getItem('tw_theme') || 'dark');
+setTheme(localStorage.getItem('tw_theme') || 'light');
 btn.addEventListener('click',()=>setTheme(html.dataset.theme==='dark'?'light':'dark'));
 
 // Sidebar scroll koru

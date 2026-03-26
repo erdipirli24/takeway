@@ -298,24 +298,51 @@ def fifo_hammadde(
 @router.post("/{eid}/fifo-oto")
 def fifo_oto(
     eid: int,
-    hammadde_id: int = Form(...),
-    miktar: float = Form(...),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Otomatik FIFO: miktarı belirtin, sistem uygun lotları kendi seçer."""
-    ok, liste, mesaj = fifo_cek(
-        db=db,
-        firma_id       = user.firma_id,
-        hammadde_id    = hammadde_id,
-        gereken        = Decimal(str(miktar)),
-        depo_id        = None,   # tüm depolardan
-        referans_id    = eid,
-        referans_tip   = "uretim",
-        yapan_id       = user.id,
-    )
-    if not ok:
-        return RedirectResponse(f"/uretim/{eid}?hata={mesaj}", status_code=302)
+    """
+    Otomatik FIFO: Reçetedeki TÜM hammaddeleri üretim miktarına göre
+    otomatik olarak çeker. Depo seçmeye gerek yok.
+    """
+    emir = db.query(UretimEmri).filter(
+        UretimEmri.id == eid,
+        UretimEmri.firma_id == user.firma_id
+    ).first()
+    if not emir or not emir.recete_id:
+        return RedirectResponse(f"/uretim/{eid}?hata=Reçete bağlı değil. Önce reçete seçin.", status_code=302)
+
+    from app.models.models import ReceteKalem
+    kalemler = db.query(ReceteKalem).filter(
+        ReceteKalem.recete_id == emir.recete_id,
+        ReceteKalem.hammadde_id != None,
+    ).all()
+
+    if not kalemler:
+        return RedirectResponse(f"/uretim/{eid}?hata=Reçetede hammadde kalemi yok.", status_code=302)
+
+    hatalar = []
+    for k in kalemler:
+        # Reçete baz miktarına göre ölçekle
+        gereken = Decimal(str(k.miktar)) * Decimal(str(emir.hedef_miktar))
+
+        ok, _, mesaj = fifo_cek(
+            db=db,
+            firma_id     = user.firma_id,
+            hammadde_id  = k.hammadde_id,
+            gereken      = gereken,
+            depo_id      = None,
+            referans_id  = eid,
+            referans_tip = "uretim",
+            yapan_id     = user.id,
+        )
+        if not ok:
+            hatalar.append(f"{k.hammadde.ad if k.hammadde else k.hammadde_id}: {mesaj}")
+
+    if hatalar:
+        hata_str = " | ".join(hatalar)
+        return RedirectResponse(f"/uretim/{eid}?hata={hata_str}", status_code=302)
+
     return RedirectResponse(f"/uretim/{eid}", status_code=302)
 
 
