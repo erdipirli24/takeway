@@ -77,7 +77,7 @@ async def recete_kaydet(
     request: Request,
     ad: str = Form(...),
     tip: str = Form("hammadde"),
-    urun_id: Optional[int] = Form(None),
+    urun_id: str = Form(""),
     baz_miktar: float = Form(1),
     baz_birim: str = Form("kg"),
     baz_kg_karsiligi: str = Form(""),
@@ -107,7 +107,7 @@ async def recete_kaydet(
 
     recete = Recete(
         firma_id          = fid,
-        urun_id           = urun_id or None,
+        urun_id           = safe_int(urun_id),
         ad                = ad,
         tip               = tip,
         versiyon          = versiyon,
