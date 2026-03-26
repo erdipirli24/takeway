@@ -7,7 +7,7 @@ Faz 4 — Analiz & Akıllı Özellikler
 """
 from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from app.templates_config import templates
+from app.templates_config import templates, safe_float, safe_int
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional, List
