@@ -94,7 +94,7 @@ def hammadde_listesi(request: Request, user: Kullanici = Depends(get_current_use
 async def hammadde_ekle(
     request: Request,
     ad: str = Form(...), kod: str = Form(""), birim: str = Form("kg"),
-    kategori_id: Optional[int] = Form(None),
+    kategori_id: str = Form(""),
     min_stok: float = Form(0), kritik_stok: float = Form(0),
     aciklama: str = Form(""), numune_gerekli: Optional[str] = Form(None),
     user: Kullanici = Depends(get_current_user), db: Session = Depends(get_db)
@@ -104,7 +104,7 @@ async def hammadde_ekle(
     secili = [a for a in ALERJEN_LISTESI if f"alerjen_{a}" in form]
     db.add(Hammadde(
         firma_id=user.firma_id, ad=ad, kod=kod or None, birim=birim,
-        kategori_id=kategori_id or None, min_stok=min_stok, kritik_stok=kritik_stok,
+        kategori_id=safe_int(kategori_id), min_stok=min_stok, kritik_stok=kritik_stok,
         aciklama=aciklama or None, alerjenler=",".join(secili),
         numune_gerekli=(numune_gerekli == "on"),
     ))

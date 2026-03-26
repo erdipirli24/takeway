@@ -123,7 +123,7 @@ def olcum_ekle(
     ccp_tanim_id: int = Form(...),
     olculen_deger: float = Form(...),
     birim: str = Form(""),
-    uretim_emri_id: Optional[int] = Form(None),
+    uretim_emri_id: str = Form(""),
     sapma_aciklama: str = Form(""),
     duzeltici_yapildi: Optional[str] = Form(None),
     duzeltici_not: str = Form(""),
@@ -146,7 +146,7 @@ def olcum_ekle(
     db.add(CCPOlcum(
         firma_id          = user.firma_id,
         ccp_tanim_id      = ccp_tanim_id,
-        uretim_emri_id    = uretim_emri_id or None,
+        uretim_emri_id    = safe_int(uretim_emri_id),
         olculen_deger     = olculen_deger,
         birim             = birim or (tanim.birim if tanim else None),
         durum             = durum,
@@ -207,7 +207,7 @@ def temizlik_plan_ekle(
 
 @router.post("/temizlik/kayit-ekle")
 def temizlik_kayit_ekle(
-    plan_id: Optional[int] = Form(None),
+    plan_id: str = Form(""),
     alan: str = Form(""),
     durum: str = Form("tamamlandı"),
     notlar: str = Form(""),
@@ -218,7 +218,7 @@ def temizlik_kayit_ekle(
     plan = db.query(TemizlikPlan).filter(TemizlikPlan.id == plan_id).first() if plan_id else None
     db.add(TemizlikKayit(
         firma_id   = user.firma_id,
-        plan_id    = plan_id or None,
+        plan_id    = safe_int(plan_id),
         alan       = alan or (plan.alan if plan else None),
         durum      = durum,
         baslangic  = now,

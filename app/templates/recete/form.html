@@ -37,13 +37,7 @@
           </div>
         </div>
 
-        <div>
-          <label class="form-label">Bağlı Ürün <small style="color:var(--muted)">(opsiyonel)</small></label>
-          <select name="urun_id" class="form-select">
-            <option value="">— Ürün seçin —</option>
-            {% for u in urunler %}<option value="{{ u.id }}">{{ u.ad }}</option>{% endfor %}
-          </select>
-        </div>
+
 
         <div class="divider"></div>
 

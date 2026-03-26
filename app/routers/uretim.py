@@ -95,8 +95,8 @@ def emir_listesi(
 
 @router.post("/ekle")
 def emir_ekle(
-    recete_id: Optional[int] = Form(None),
-    urun_id: Optional[int] = Form(None),
+    recete_id: str = Form(""),
+    urun_id: str = Form(""),
     urun_adi: str = Form(""),
     hedef_miktar: float = Form(...),
     hedef_birim: str = Form("kg"),
@@ -126,8 +126,8 @@ def emir_ekle(
 
     emir = UretimEmri(
         firma_id       = fid,
-        recete_id      = recete_id or None,
-        urun_id        = urun_id or None,
+        recete_id      = safe_int(recete_id),
+        urun_id        = safe_int(urun_id),
         emri_no        = no,
         urun_adi       = urun_adi,
         hedef_miktar   = hedef_miktar,
@@ -456,7 +456,7 @@ def yari_uret(
     miktar: float = Form(...),
     birim: str = Form("kg"),
     raf_omru_gun: int = Form(...),
-    depo_id: Optional[int] = Form(None),
+    depo_id: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -484,7 +484,7 @@ def yari_uret(
         birim          = birim,
         raf_omru_gun   = safe_int(raf_omru_gun),
         son_kullanma   = son_kullanma,
-        depo_id        = depo_id or None,
+        depo_id        = safe_int(depo_id),
         qr_data        = qr,
         created_by     = user.id,
     )
@@ -503,7 +503,7 @@ def parti_kaydet(
     birim: str = Form("kg"),
     uretim_tarihi: Optional[str] = Form(None),
     son_kullanma: Optional[str] = Form(None),
-    depo_id: Optional[int] = Form(None),
+    depo_id: str = Form(""),
     notlar: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -536,7 +536,7 @@ def parti_kaydet(
         birim          = birim,
         uretim_tarihi  = parse_dt(uretim_tarihi),
         son_kullanma   = parse_dt(son_kullanma),
-        depo_id        = depo_id or None,
+        depo_id        = safe_int(depo_id),
         qr_data        = qr,
         notlar         = notlar or None,
     )

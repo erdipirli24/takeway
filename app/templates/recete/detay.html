@@ -16,7 +16,6 @@
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Baz Birim</span><strong>{{ recete.baz_miktar|fmt }} {{ recete.baz_birim }}</strong></div>
           {% if recete.baz_kg_karsiligi %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">kg Karşılığı</span><span>{{ recete.baz_kg_karsiligi }} kg</span></div>{% endif %}
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Versiyon</span><code>v{{ recete.versiyon }}</code></div>
-          {% if recete.urun %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Ürün</span><span>{{ recete.urun.ad }}</span></div>{% endif %}
           {% if recete.onaylayan_id %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Onay Tarihi</span><span>{{ recete.onay_tarihi.strftime('%d.%m.%Y') if recete.onay_tarihi else '—' }}</span></div>{% endif %}
         </div>
         {% if recete.notlar %}<div class="divider"></div><div style="font-size:12.5px;color:var(--muted)">{{ recete.notlar }}</div>{% endif %}

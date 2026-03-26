@@ -144,8 +144,8 @@ def siparis_detay(
 @router.post("/siparis/{sid}/kalem-ekle")
 def kalem_ekle(
     sid: int,
-    urun_parti_id: Optional[int] = Form(None),
-    urun_id: Optional[int] = Form(None),
+    urun_parti_id: str = Form(""),
+    urun_id: str = Form(""),
     aciklama: str = Form(""),
     miktar: float = Form(...),
     birim: str = Form("kg"),
@@ -157,8 +157,8 @@ def kalem_ekle(
     toplam = (miktar * (birim_fiyat or 0)) * (1 + kdv_oran / 100)
     db.add(SatisKalem(
         siparis_id    = sid,
-        urun_parti_id = urun_parti_id or None,
-        urun_id       = urun_id or None,
+        urun_parti_id = safe_int(urun_parti_id),
+        urun_id       = safe_int(urun_id),
         aciklama      = aciklama or None,
         miktar        = miktar,
         birim         = birim,
@@ -217,7 +217,7 @@ def sevkiyat_listesi(
 
 @router.post("/sevkiyat/olustur")
 def sevkiyat_olustur(
-    siparis_id: Optional[int] = Form(None),
+    siparis_id: str = Form(""),
     sevk_tarihi: Optional[str] = Form(None),
     nakliyeci: str = Form(""),
     plaka: str = Form(""),
@@ -232,7 +232,7 @@ def sevkiyat_olustur(
 
     sv = Sevkiyat(
         firma_id   = fid,
-        siparis_id = siparis_id or None,
+        siparis_id = safe_int(siparis_id),
         sevk_no    = no,
         sevk_tarihi = _parse_dt(sevk_tarihi),
         nakliyeci  = nakliyeci or None,

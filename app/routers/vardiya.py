@@ -57,7 +57,7 @@ def vardiya_listesi(
 def vardiya_ekle(
     tarih: str = Form(...),
     tip: str = Form("sabah"),
-    sorumlu_id: Optional[int] = Form(None),
+    sorumlu_id: str = Form(""),
     notlar: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -66,7 +66,7 @@ def vardiya_ekle(
         firma_id   = user.firma_id,
         tarih      = _parse_dt(tarih) or datetime.now(timezone.utc),
         tip        = tip,
-        sorumlu_id = sorumlu_id or None,
+        sorumlu_id = safe_int(sorumlu_id),
         baslangic  = _parse_dt(tarih),
         notlar     = notlar or None,
     )

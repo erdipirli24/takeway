@@ -62,7 +62,6 @@ def recete_yeni_form(
     fid = user.firma_id
     return templates.TemplateResponse("recete/form.html", {
         "request": request, "user": user,
-        "urunler":     db.query(Urun).filter(Urun.firma_id == fid, Urun.aktif == True).all(),
         "hammaddeler": db.query(Hammadde).filter(Hammadde.firma_id == fid, Hammadde.aktif == True).order_by(Hammadde.ad).all(),
         "ara_urunler": db.query(Recete).filter(Recete.firma_id == fid, Recete.tip == ReceteTip.karisim, Recete.onaylandi == True, Recete.aktif == True).all(),
         "yari_mamuller": db.query(YariMamul).filter(YariMamul.firma_id == fid, YariMamul.durum == YariMamulDurum.stokta, YariMamul.kalan_miktar > 0).order_by(YariMamul.ad).all(),
@@ -77,7 +76,6 @@ async def recete_kaydet(
     request: Request,
     ad: str = Form(...),
     tip: str = Form("hammadde"),
-    urun_id: str = Form(""),
     baz_miktar: float = Form(1),
     baz_birim: str = Form("kg"),
     baz_kg_karsiligi: str = Form(""),
@@ -107,7 +105,7 @@ async def recete_kaydet(
 
     recete = Recete(
         firma_id          = fid,
-        urun_id           = safe_int(urun_id),
+        urun_id           = None,
         ad                = ad,
         tip               = tip,
         versiyon          = versiyon,
