@@ -29,18 +29,18 @@
           {% if emir.baslangic %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Başlangıç</span><span>{{ emir.baslangic.strftime('%d.%m.%Y') }}</span></div>{% endif %}
         </div>
         <div class="divider"></div>
-        <label class="form-label">Durum Güncelle</label>
-        <div style="display:flex;gap:8px">
-          <select name="durum" id="durumSel" class="form-select">
-            {% for d in UretimDurum %}
-            <option value="{{ d.value }}" {% if d==emir.durum %}selected{% endif %}>{{ d.value }}</option>
-            {% endfor %}
-          </select>
-          <button type="button" class="btn-tw" id="durumBtn">↑</button>
+        {% if emir.durum.value == 'tamamlandı' %}
+        <div style="background:rgba(46,160,67,.1);border:1px solid rgba(46,160,67,.3);border-radius:8px;padding:12px;text-align:center;color:var(--green)">
+          <i class="bi bi-check-circle-fill" style="font-size:20px"></i>
+          <div style="font-weight:600;margin-top:4px">Üretim Tamamlandı</div>
+          {% if emir.bitis %}<div style="font-size:11px;opacity:.7">{{ emir.bitis.strftime('%d.%m.%Y %H:%M') }}</div>{% endif %}
         </div>
-        <form method="POST" action="/uretim/{{ emir.id }}/durum" id="normalDurumForm" style="display:none">
-          <input type="hidden" name="durum" id="normalDurumVal">
-        </form>
+        {% else %}
+        <button type="button" class="btn-tw w-100" style="padding:10px;font-size:13px;justify-content:center"
+                data-bs-toggle="modal" data-bs-target="#modalTamamla">
+          <i class="bi bi-check-circle me-2"></i>Parti No Ver & Tamamla
+        </button>
+        {% endif %}
 
       </div>
     </div>
@@ -383,82 +383,92 @@ function showQR(no,b64){document.getElementById('qrTitle').textContent=no;docume
 </script>
 {% endblock %}
 
-<!-- TAMAMLA MODAL — durum tamamlandı seçilince açılır -->
+<!-- TAMAMLA MODAL -->
 <div class="modal fade" id="modalTamamla" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-check-circle me-2" style="color:var(--green)"></i>Üretimi Tamamla & Stoğa Al</h5>
+      <div class="modal-header" style="background:rgba(46,160,67,.08)">
+        <h5 class="modal-title">
+          <i class="bi bi-check-circle me-2" style="color:var(--green)"></i>Parti No Ver & Tamamla
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form method="POST" action="/uretim/{{ emir.id }}/tamamla-ve-stokla">
         <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
 
+          <!-- Parti No -->
           <div>
-            <label class="form-label">Bu üretim nedir? *</label>
+            <label class="form-label">Parti Numarası</label>
+            <input type="text" name="parti_no" class="form-control"
+                   placeholder="Otomatik oluşturulur"
+                   style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Boş bırakırsanız sistem otomatik atar</div>
+          </div>
+
+          <!-- Ara mı Ana mı -->
+          <div>
+            <label class="form-label">Üretim Türü *</label>
             <div style="display:flex;gap:8px">
               <label style="flex:1;cursor:pointer;border:2px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px" id="lblAra">
                 <input type="radio" name="urun_tipi" value="ara" style="accent-color:var(--orange)">
                 <div>
                   <div style="font-weight:600;font-size:13px">🧩 Ara Ürün</div>
-                  <div style="font-size:11px;color:var(--muted)">Hamur, karışım, baharat</div>
+                  <div style="font-size:11px;color:var(--muted)">Hamur, karışım...</div>
                 </div>
               </label>
               <label style="flex:1;cursor:pointer;border:2px solid var(--green);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px" id="lblAna">
                 <input type="radio" name="urun_tipi" value="ana" checked style="accent-color:var(--green)">
                 <div>
                   <div style="font-weight:600;font-size:13px">🎯 Ana Ürün</div>
-                  <div style="font-size:11px;color:var(--muted)">Mantı, gözleme, son ürün</div>
+                  <div style="font-size:11px;color:var(--muted)">Mantı, gözleme...</div>
                 </div>
               </label>
             </div>
           </div>
 
+          <!-- Miktar -->
           <div class="row g-2">
-            <div class="col-7">
+            <div class="col-8">
               <label class="form-label">Üretilen Miktar *</label>
               <input type="number" name="miktar" class="form-control" step="0.001" min="0.001" required
-                     placeholder="{{ emir.hedef_miktar|fmt }}" value="{{ emir.hedef_miktar|fmt }}">
+                     value="{{ emir.hedef_miktar|fmt }}">
             </div>
-            <div class="col-5">
+            <div class="col-4">
               <label class="form-label">Birim</label>
               <select name="birim" class="form-select">
                 <option value="kg">kg</option>
                 <option value="adet">adet</option>
                 <option value="paket">paket</option>
                 <option value="g">g</option>
-                <option value="lt">lt</option>
               </select>
             </div>
           </div>
 
-          <div id="rafDiv">
-            <label class="form-label">Raf Ömrü (gün) <small style="color:var(--muted)">— ara ürün için</small></label>
+          <!-- Ara ürün: raf ömrü -->
+          <div id="rafDiv" style="display:none">
+            <label class="form-label">Raf Ömrü (gün)</label>
             <input type="number" name="raf_omru_gun" class="form-control" value="2" min="1">
           </div>
 
-          <div id="sktDiv" style="display:none">
+          <!-- Ana ürün: SKT -->
+          <div id="sktDiv">
             <label class="form-label">Son Kullanma Tarihi</label>
             <input type="date" name="son_kullanma" class="form-control">
           </div>
 
+          <!-- Depo -->
           <div>
-            <label class="form-label">Hangi Depoya Koyacaksınız? *</label>
+            <label class="form-label">Hangi Depoya? *</label>
             <select name="depo_id" class="form-select" required>
               <option value="">— Depo seçin —</option>
               {% for d in depolar %}
-              <option value="{{ d.id }}">{{ d.ad }} <small>({{ d.tip }})</small></option>
+              <option value="{{ d.id }}">{{ d.ad }} ({{ d.tip }})</option>
               {% endfor %}
             </select>
           </div>
 
-          <div>
-            <label class="form-label">Ürün Adı / Açıklama</label>
-            <input type="text" name="urun_adi" class="form-control"
-                   value="{{ emir.urun_adi or (emir.recete.ad if emir.recete else '') }}"
-                   placeholder="Ürün adı">
-            <input type="hidden" name="urun_id" value="{{ emir.urun_id or '' }}">
-          </div>
+          <input type="hidden" name="urun_id" value="{{ emir.urun_id or '' }}">
+          <input type="hidden" name="urun_adi" value="{{ emir.urun_adi or (emir.recete.ad if emir.recete else '') }}">
 
         </div>
         <div class="modal-footer">
@@ -474,34 +484,19 @@ function showQR(no,b64){document.getElementById('qrTitle').textContent=no;docume
 
 {% block scripts %}
 <script>
-// Durum güncelle butonu
-document.getElementById('durumBtn').addEventListener('click', function() {
-  var durum = document.getElementById('durumSel').value;
-  if (durum === 'tamamlandı') {
-    new bootstrap.Modal(document.getElementById('modalTamamla')).show();
-  } else {
-    document.getElementById('normalDurumVal').value = durum;
-    document.getElementById('normalDurumForm').submit();
-  }
-});
-
-// Tip seçimi — ara/ana
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
-    r.addEventListener('change', function() {
-      document.getElementById('lblAra').style.borderColor = 'var(--border)';
-      document.getElementById('lblAna').style.borderColor = 'var(--border)';
-      document.getElementById(this.value === 'ara' ? 'lblAra' : 'lblAna').style.borderColor =
-        this.value === 'ara' ? 'var(--orange)' : 'var(--green)';
-      document.getElementById('rafDiv').style.display = this.value === 'ara' ? '' : 'none';
-      document.getElementById('sktDiv').style.display = this.value === 'ana' ? '' : 'none';
-    });
+// Tip seçimi
+document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    document.getElementById('lblAra').style.borderColor = 'var(--border)';
+    document.getElementById('lblAna').style.borderColor = 'var(--border)';
+    document.getElementById(this.value === 'ara' ? 'lblAra' : 'lblAna').style.borderColor =
+      this.value === 'ara' ? 'var(--orange)' : 'var(--green)';
+    document.getElementById('rafDiv').style.display = this.value === 'ara' ? '' : 'none';
+    document.getElementById('sktDiv').style.display = this.value === 'ana' ? '' : 'none';
   });
-  // Default: ana ürün
-  document.getElementById('lblAna').style.borderColor = 'var(--green)';
-  document.getElementById('rafDiv').style.display = 'none';
-  document.getElementById('sktDiv').style.display = '';
 });
+// Default: ana
+document.getElementById('lblAna').style.borderColor = 'var(--green)';
 </script>
 {% endblock %}
 
