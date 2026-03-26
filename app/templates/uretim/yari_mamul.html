@@ -4,7 +4,7 @@
 {% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/uretim/">Üretim</a> / Yarı Mamul{% endblock %}
 {% block content %}
 {% if fire_sayisi > 0 %}
-<div class="alert-tw alert-warn mb-3"><i class="bi bi-fire"></i> <strong>{{ fire_sayisi }} yarı mamul</strong> raf ömrü dolduğundan otomatik olarak fire edildi.</div>
+<div class="alert-tw alert-warn mb-3"><i class="bi bi-fire"></i> <strong>{{ fire_sayisi|fmt }} yarı mamul</strong> raf ömrü dolduğundan otomatik olarak fire edildi.</div>
 {% endif %}
 <div class="card">
   <div class="card-header"><i class="bi bi-layers me-2" style="color:var(--purple)"></i>Yarı Mamul Partileri</div>
@@ -18,7 +18,7 @@
         <tr>
           <td class="ps-3"><code>{{ ym.parti_no }}</code></td>
           <td style="font-weight:500">{{ ym.ad }}</td>
-          <td style="font-family:'JetBrains Mono',monospace">{{ ym.kalan_miktar }} / {{ ym.uretim_miktari }} {{ ym.birim }}</td>
+          <td style="font-family:'JetBrains Mono',monospace">{{ ym.kalan_miktar|fmt }} / {{ ym.uretim_miktari|fmt }} {{ ym.birim }}</td>
           <td style="font-size:12px">{{ ym.raf_omru_gun }} gün</td>
           <td>
             {% if ym.son_kullanma %}

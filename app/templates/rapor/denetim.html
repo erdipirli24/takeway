@@ -27,7 +27,7 @@
   <div class="row g-3 mb-4">
     <div class="col-6 col-lg-2"><div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--blue)">{{ lot_giris }}</div><div style="font-size:11px;color:var(--muted)">Lot Girişi</div></div></div>
     <div class="col-6 col-lg-2"><div style="background:rgba(46,160,67,.08);border:1px solid rgba(46,160,67,.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--green)">{{ uretim_tamamlanan }}</div><div style="font-size:11px;color:var(--muted)">Üretim</div></div></div>
-    <div class="col-6 col-lg-2"><div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--blue)">{{ sevkiyat_sayisi }}</div><div style="font-size:11px;color:var(--muted)">Sevkiyat</div></div></div>
+    <div class="col-6 col-lg-2"><div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--blue)">{{ sevkiyat_sayisi|fmt }}</div><div style="font-size:11px;color:var(--muted)">Sevkiyat</div></div></div>
     <div class="col-6 col-lg-2"><div style="background:rgba(46,160,67,.08);border:1px solid rgba(46,160,67,.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--green)">%{{ ccp_oran }}</div><div style="font-size:11px;color:var(--muted)">HACCP Uyum</div></div></div>
     <div class="col-6 col-lg-2"><div style="background:rgba({% if aktif_recall %}248,81,73{% else %}46,160,67{% endif %},.08);border:1px solid rgba({% if aktif_recall %}248,81,73{% else %}46,160,67{% endif %},.2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:700;color:{% if aktif_recall %}var(--red){% else %}var(--green){% endif %}">{{ aktif_recall|length }}</div><div style="font-size:11px;color:var(--muted)">Aktif Recall</div></div></div>
   </div>
@@ -48,7 +48,7 @@
         <td>{{ lot.hammadde.ad }}</td>
         <td style="font-size:12px">{{ lot.tedarikci.ad if lot.tedarikci else '—' }}</td>
         <td><code style="font-size:11px">{{ lot.fatura_no or '—' }}</code></td>
-        <td style="font-family:'JetBrains Mono',monospace">{{ lot.giris_miktar }} {{ lot.birim }}</td>
+        <td style="font-family:'JetBrains Mono',monospace">{{ lot.giris_miktar|fmt }} {{ lot.birim }}</td>
         <td><span class="badge-tw b-{{ lot.durum.value }}">{{ lot.durum.value }}</span></td>
         <td style="font-size:11px;color:var(--muted)">{{ lot.kabul_tarihi.strftime('%d.%m.%Y') if lot.kabul_tarihi else '—' }}</td>
       </tr>

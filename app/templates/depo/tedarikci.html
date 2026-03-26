@@ -17,7 +17,7 @@
         <td><code>{{ t.kod or '—' }}</code></td>
         <td>{{ t.vergi_no or '—' }}</td>
         <td>{{ t.telefon or '—' }}</td>
-        <td style="font-family:'JetBrains Mono',monospace">{{ t.toplam_lot }}</td>
+        <td style="font-family:'JetBrains Mono',monospace">{{ t.toplam_lot|fmt }}</td>
         <td style="color:{{ 'var(--red)' if t.karantina_lot else 'var(--muted)' }};font-family:'JetBrains Mono',monospace">{{ t.karantina_lot }}</td>
         <td>
           <span style="font-weight:600;color:{% if puan>=90 %}var(--green){% elif puan>=70 %}var(--orange){% else %}var(--red){% endif %}">

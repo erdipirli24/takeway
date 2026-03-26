@@ -46,7 +46,7 @@
             <tr>
               <td class="ps-3"><a href="/uretim/parti/{{ k.urun_parti_id }}" style="color:var(--green)"><code>{{ k.urun_parti.parti_no if k.urun_parti else '—' }}</code></a></td>
               <td>{{ k.urun_parti.urun.ad if k.urun_parti and k.urun_parti.urun else '—' }}</td>
-              <td style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ k.miktar }}</td>
+              <td style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ k.miktar|fmt }}</td>
               <td>{{ k.birim or '—' }}</td>
             </tr>
             {% endfor %}
@@ -63,7 +63,7 @@
   <div class="modal-header"><h5 class="modal-title">Kalem Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
   <form method="POST" action="/satis/sevkiyat/{{ sv.id }}/kalem-ekle">
     <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
-      <div><label class="form-label">Ürün Partisi *</label><select name="urun_parti_id" class="form-select" required><option value="">— Seçiniz —</option>{% for p in partiler %}<option value="{{ p.id }}">{{ p.parti_no }} — {{ p.urun.ad if p.urun else '' }} ({{ p.kalan_miktar }} {{ p.birim }})</option>{% endfor %}</select></div>
+      <div><label class="form-label">Ürün Partisi *</label><select name="urun_parti_id" class="form-select" required><option value="">— Seçiniz —</option>{% for p in partiler %}<option value="{{ p.id }}">{{ p.parti_no }} — {{ p.urun.ad if p.urun else '' }} ({{ p.kalan_miktar|fmt }} {{ p.birim }})</option>{% endfor %}</select></div>
       <div class="row g-2">
         <div class="col-7"><label class="form-label">Miktar *</label><input type="number" name="miktar" class="form-control" step="0.001" required></div>
         <div class="col-5"><label class="form-label">Birim</label><select name="birim" class="form-select"><option>kg</option><option>adet</option><option>paket</option></select></div>

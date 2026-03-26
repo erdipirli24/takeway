@@ -72,7 +72,7 @@
         <td>{{ i }}</td>
         <td>{{ k.urun_parti.urun.ad if k.urun_parti and k.urun_parti.urun else '—' }}</td>
         <td><code>{{ k.urun_parti.parti_no if k.urun_parti else '—' }}</code></td>
-        <td style="font-weight:bold">{{ k.miktar }}</td>
+        <td style="font-weight:bold">{{ k.miktar|fmt }}</td>
         <td>{{ k.birim or '—' }}</td>
         <td>{{ k.urun_parti.son_kullanma.strftime('%d.%m.%Y') if k.urun_parti and k.urun_parti.son_kullanma else '—' }}</td>
       </tr>

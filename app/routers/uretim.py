@@ -274,16 +274,43 @@ def fifo_hammadde(
     eid: int,
     hammadde_id: int = Form(...),
     miktar: float = Form(...),
-    depo_id: Optional[int] = Form(None),
+    depo_id: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # depo_id boş string gelebilir — güvenli parse
+    _depo_id = int(depo_id) if depo_id and depo_id.strip().isdigit() else None
+
     ok, _, mesaj = fifo_cek(
         db=db,
         firma_id       = user.firma_id,
         hammadde_id    = hammadde_id,
         gereken        = Decimal(str(miktar)),
-        depo_id        = depo_id or None,
+        depo_id        = _depo_id,
+        referans_id    = eid,
+        referans_tip   = "uretim",
+        yapan_id       = user.id,
+    )
+    if not ok:
+        return RedirectResponse(f"/uretim/{eid}?hata={mesaj}", status_code=302)
+    return RedirectResponse(f"/uretim/{eid}", status_code=302)
+
+
+@router.post("/{eid}/fifo-oto")
+def fifo_oto(
+    eid: int,
+    hammadde_id: int = Form(...),
+    miktar: float = Form(...),
+    user: Kullanici = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Otomatik FIFO: miktarı belirtin, sistem uygun lotları kendi seçer."""
+    ok, liste, mesaj = fifo_cek(
+        db=db,
+        firma_id       = user.firma_id,
+        hammadde_id    = hammadde_id,
+        gereken        = Decimal(str(miktar)),
+        depo_id        = None,   # tüm depolardan
         referans_id    = eid,
         referans_tip   = "uretim",
         yapan_id       = user.id,

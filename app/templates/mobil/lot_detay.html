@@ -55,7 +55,7 @@
     {% if fifo_konum %}
     <div style="margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px">
       <span class="fifo">{{ fifo_konum }}</span>
-      <span style="font-size:12px;color:var(--muted)">FIFO sırası / {{ fifo_toplam }}</span>
+      <span style="font-size:12px;color:var(--muted)">FIFO sırası / {{ fifo_toplam|fmt }}</span>
     </div>
     {% endif %}
   </div>
@@ -67,8 +67,8 @@
     <div class="row"><span class="label">Tedarikçi Lot</span><code>{{ lot.lot_no }}</code></div>
     <div class="row"><span class="label">Fatura No</span><code>{{ lot.fatura_no or '—' }}</code></div>
     <div class="row"><span class="label">Tedarikçi</span><span class="val">{{ lot.tedarikci.ad if lot.tedarikci else '—' }}</span></div>
-    <div class="row"><span class="label">Giriş Miktarı</span><span class="val">{{ lot.giris_miktar }} {{ lot.hammadde.birim }}</span></div>
-    <div class="row"><span class="label">Kalan Miktar</span><span class="val" style="color:var(--green);font-weight:700">{{ lot.kalan_miktar }} {{ lot.hammadde.birim }}</span></div>
+    <div class="row"><span class="label">Giriş Miktarı</span><span class="val">{{ lot.giris_miktar|fmt }} {{ lot.hammadde.birim }}</span></div>
+    <div class="row"><span class="label">Kalan Miktar</span><span class="val" style="color:var(--green);font-weight:700">{{ lot.kalan_miktar|fmt }} {{ lot.hammadde.birim }}</span></div>
     <div class="row"><span class="label">Son Kullanma</span><span class="val" style="color:{% if skt_gun < 7 %}var(--red){% elif skt_gun < 30 %}var(--orange){% else %}var(--text){% endif %}">{{ lot.son_kullanma.strftime('%d.%m.%Y') if lot.son_kullanma else '—' }}</span></div>
     <div class="row"><span class="label">Depo</span><span class="val">{{ lot.depo.ad if lot.depo else '—' }}{% if lot.depo_konumu %} / {{ lot.depo_konumu }}{% endif %}</span></div>
     <div class="row"><span class="label">Durum</span><span class="badge b-{{ lot.durum.value }}">{{ lot.durum.value }}</span></div>

@@ -12,7 +12,7 @@
         {% endif %}
         <div style="font-size:14px;font-weight:700;color:var(--green)">{{ parti.parti_no }}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:3px">{{ parti.urun.ad if parti.urun else '—' }}</div>
-        <div style="margin-top:12px;font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ parti.uretim_miktari }} {{ parti.birim }}</div>
+        <div style="margin-top:12px;font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ parti.uretim_miktari|fmt }} {{ parti.birim }}</div>
         {% if parti.son_kullanma %}
         <div style="margin-top:8px;font-size:13px;font-weight:600;color:var(--orange)">SKT: {{ parti.son_kullanma.strftime('%d.%m.%Y') }}</div>
         {% endif %}
@@ -29,7 +29,7 @@
           <div style="background:rgba(46,160,67,.08);border:1px solid rgba(46,160,67,.3);border-radius:8px;padding:12px 16px">
             <div style="font-size:10.5px;color:var(--green);font-weight:600;margin-bottom:4px">ÜRÜN PARTİSİ</div>
             <div style="font-weight:600"><code>{{ parti.parti_no }}</code> — {{ parti.urun.ad if parti.urun else '—' }}</div>
-            <div style="font-size:12px;color:var(--muted)">{{ parti.uretim_miktari }} {{ parti.birim }} · {{ parti.uretim_tarihi.strftime('%d.%m.%Y') if parti.uretim_tarihi else '—' }}</div>
+            <div style="font-size:12px;color:var(--muted)">{{ parti.uretim_miktari|fmt }} {{ parti.birim }} · {{ parti.uretim_tarihi.strftime('%d.%m.%Y') if parti.uretim_tarihi else '—' }}</div>
           </div>
           <div style="text-align:center;color:var(--muted)">↑</div>
           <!-- Üretim Emri -->
@@ -85,7 +85,7 @@ function printQR(){
   const img=document.querySelector('.qr-box img');
   if(!img)return;
   const w=window.open('','_blank','width=320,height=440');
-  w.document.write('<html><body style="text-align:center;font-family:monospace;padding:20px"><img src="'+img.src+'" style="width:200px;height:200px"><br><b>{{ parti.parti_no }}</b><br>{{ parti.urun.ad if parti.urun else "" }}<br>{{ parti.uretim_miktari }} {{ parti.birim }}<br>SKT: {{ parti.son_kullanma.strftime("%d.%m.%Y") if parti.son_kullanma else "—" }}</body></html>');
+  w.document.write('<html><body style="text-align:center;font-family:monospace;padding:20px"><img src="'+img.src+'" style="width:200px;height:200px"><br><b>{{ parti.parti_no }}</b><br>{{ parti.urun.ad if parti.urun else "" }}<br>{{ parti.uretim_miktari|fmt }} {{ parti.birim }}<br>SKT: {{ parti.son_kullanma.strftime("%d.%m.%Y") if parti.son_kullanma else "—" }}</body></html>');
   w.print();
 }
 </script>

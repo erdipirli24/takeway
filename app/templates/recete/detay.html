@@ -13,7 +13,7 @@
           {% if recete.onaylandi %}<span class="badge-tw b-onaylı">✓ Onaylı</span>{% else %}<span class="badge-tw b-beklemede">Onay Bekliyor</span>{% endif %}
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Baz Birim</span><strong>{{ recete.baz_miktar }} {{ recete.baz_birim }}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Baz Birim</span><strong>{{ recete.baz_miktar|fmt }} {{ recete.baz_birim }}</strong></div>
           {% if recete.baz_kg_karsiligi %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">kg Karşılığı</span><span>{{ recete.baz_kg_karsiligi }} kg</span></div>{% endif %}
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Versiyon</span><code>v{{ recete.versiyon }}</code></div>
           {% if recete.urun %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Ürün</span><span>{{ recete.urun.ad }}</span></div>{% endif %}
@@ -51,7 +51,7 @@
 
   <div class="col-lg-8">
     <div class="card">
-      <div class="card-header"><i class="bi bi-list-ul me-2"></i>Reçete Kalemleri <small style="color:var(--muted)">({{ recete.baz_miktar }} {{ recete.baz_birim }} baz)</small></div>
+      <div class="card-header"><i class="bi bi-list-ul me-2"></i>Reçete Kalemleri <small style="color:var(--muted)">({{ recete.baz_miktar|fmt }} {{ recete.baz_birim }} baz)</small></div>
       <div class="card-body p-0">
         {% if recete.kalemler %}
         <table class="table mb-0">
@@ -69,7 +69,7 @@
                 {% endif %}
                 {% if k.notlar %}<div style="font-size:11px;color:var(--muted)">{{ k.notlar }}</div>{% endif %}
               </td>
-              <td style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ k.miktar }}</td>
+              <td style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ k.miktar|fmt }}</td>
               <td>{{ k.birim }}</td>
               <td style="font-size:12px;color:var(--muted)">±{{ k.tolerans_yuzde }}%</td>
               <td>{% if k.zorunlu %}<span style="color:var(--green)">✓</span>{% else %}<span style="color:var(--muted)">—</span>{% endif %}</td>

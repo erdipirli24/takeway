@@ -34,8 +34,8 @@
   <div class="card">
     <div class="row"><span class="label">Parti No</span><code style="color:var(--green)">{{ parti.parti_no }}</code></div>
     <div class="row"><span class="label">Ürün</span><span class="val">{{ parti.urun.ad if parti.urun else '—' }}</span></div>
-    <div class="row"><span class="label">Miktar</span><span class="val" style="color:var(--green);font-size:18px;font-weight:700">{{ parti.uretim_miktari }} {{ parti.birim }}</span></div>
-    <div class="row"><span class="label">Kalan</span><span class="val">{{ parti.kalan_miktar }} {{ parti.birim }}</span></div>
+    <div class="row"><span class="label">Miktar</span><span class="val" style="color:var(--green);font-size:18px;font-weight:700">{{ parti.uretim_miktari|fmt }} {{ parti.birim }}</span></div>
+    <div class="row"><span class="label">Kalan</span><span class="val">{{ parti.kalan_miktar|fmt }} {{ parti.birim }}</span></div>
     <div class="row"><span class="label">Üretim Tarihi</span><span class="val">{{ parti.uretim_tarihi.strftime('%d.%m.%Y') if parti.uretim_tarihi else '—' }}</span></div>
     <div class="row"><span class="label">Son Kullanma</span>
       {% if parti.son_kullanma %}

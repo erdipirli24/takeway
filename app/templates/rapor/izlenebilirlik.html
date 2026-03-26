@@ -26,7 +26,7 @@
       <div class="card mb-3"><div class="card-header" style="color:var(--green)">Ürün Partisi</div><div class="card-body">
         <div style="font-size:14px;font-weight:700;margin-bottom:8px"><code>{{ sonuc.parti.parti_no }}</code></div>
         <div style="font-size:13px;color:var(--muted)">{{ sonuc.parti.urun.ad if sonuc.parti.urun else '—' }}</div>
-        <div style="font-size:13px;margin-top:6px">{{ sonuc.parti.uretim_miktari }} {{ sonuc.parti.birim }}</div>
+        <div style="font-size:13px;margin-top:6px">{{ sonuc.parti.uretim_miktari|fmt }} {{ sonuc.parti.birim }}</div>
         {% if sonuc.parti.son_kullanma %}<div style="font-size:12px;color:var(--orange);margin-top:4px">SKT: {{ sonuc.parti.son_kullanma.strftime('%d.%m.%Y') }}</div>{% endif %}
       </div></div>
       {% if sonuc.sevk_kalemler %}
@@ -98,7 +98,7 @@
             <tr onclick="location.href='/uretim/parti/{{ p.id }}'" style="cursor:pointer">
               <td class="ps-3"><code style="color:var(--green)">{{ p.parti_no }}</code></td>
               <td>{{ p.urun.ad if p.urun else '—' }}</td>
-              <td style="font-family:'JetBrains Mono',monospace">{{ p.uretim_miktari }} {{ p.birim }}</td>
+              <td style="font-family:'JetBrains Mono',monospace">{{ p.uretim_miktari|fmt }} {{ p.birim }}</td>
               <td style="font-size:12px">{{ p.son_kullanma.strftime('%d.%m.%Y') if p.son_kullanma else '—' }}</td>
             </tr>
             {% endfor %}

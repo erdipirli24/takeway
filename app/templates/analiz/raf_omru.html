@@ -17,7 +17,7 @@
         <tr onclick="location.href='/uretim/parti/{{ s.parti.id }}'" style="cursor:pointer;background:{% if s.durum=='kritik' %}rgba(248,81,73,.05){% elif s.durum=='warn' %}rgba(227,179,65,.03){% else %}transparent{% endif %}">
           <td class="ps-3"><code style="color:var(--green)">{{ s.parti.parti_no }}</code></td>
           <td>{{ s.parti.urun.ad if s.parti.urun else '—' }}</td>
-          <td style="font-family:'JetBrains Mono',monospace">{{ s.parti.kalan_miktar }} {{ s.parti.birim }}</td>
+          <td style="font-family:'JetBrains Mono',monospace">{{ s.parti.kalan_miktar|fmt }} {{ s.parti.birim }}</td>
           <td style="font-size:12.5px;font-weight:600;color:{% if s.durum=='kritik' %}var(--red){% elif s.durum=='warn' %}var(--orange){% else %}var(--text){% endif %}">
             {{ s.parti.son_kullanma.strftime('%d.%m.%Y') }}
           </td>

@@ -51,7 +51,7 @@
     <div class="baslik">{{ lot.hammadde.ad }}</div>
     <div class="parti-no">{{ lot.ic_parti_no or lot.lot_no }}</div>
     <div class="satir"><span class="label">Ted. Lot:</span><span class="val">{{ lot.lot_no }}</span></div>
-    <div class="satir"><span class="label">Miktar:</span><span class="val">{{ lot.giris_miktar }} {{ lot.hammadde.birim }}</span></div>
+    <div class="satir"><span class="label">Miktar:</span><span class="val">{{ lot.giris_miktar|fmt }} {{ lot.hammadde.birim }}</span></div>
     <div class="satir"><span class="label">SKT:</span><span class="val" style="{% if lot.son_kullanma %}color:#cc0000{% endif %}">{{ lot.son_kullanma.strftime('%d.%m.%Y') if lot.son_kullanma else '—' }}</span></div>
     <div class="satir"><span class="label">Tedarikçi:</span><span class="val">{{ lot.tedarikci.ad[:20] if lot.tedarikci else '—' }}</span></div>
     <div class="satir"><span class="label">Fatura:</span><span class="val">{{ lot.fatura_no or '—' }}</span></div>

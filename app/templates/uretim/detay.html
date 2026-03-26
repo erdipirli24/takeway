@@ -23,7 +23,7 @@
         </div>
         <div style="font-size:16px;font-weight:700;margin-bottom:12px">{{ emir.urun_adi }}</div>
         <div style="display:flex;flex-direction:column;gap:7px;font-size:13px">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Hedef</span><strong style="font-family:'JetBrains Mono',monospace">{{ emir.hedef_miktar }} {{ emir.hedef_birim }}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Hedef</span><strong style="font-family:'JetBrains Mono',monospace">{{ emir.hedef_miktar|fmt }} {{ emir.hedef_birim }}</strong></div>
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Üretilen</span><strong style="font-family:'JetBrains Mono',monospace;color:var(--green)">{{ emir.uretilen_miktar or 0 }} {{ emir.hedef_birim }}</strong></div>
           {% if emir.recete %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Reçete</span><a href="/recete/{{ emir.recete_id }}" style="color:var(--blue)">{{ emir.recete.ad }} v{{ emir.recete.versiyon }}</a></div>{% endif %}
           {% if emir.baslangic %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Başlangıç</span><span>{{ emir.baslangic.strftime('%d.%m.%Y') }}</span></div>{% endif %}
@@ -82,7 +82,7 @@
     <!-- Reçete Kalemleri -->
     {% if recete_kalemleri %}
     <div class="card mb-3">
-      <div class="card-header"><i class="bi bi-journal-text me-2" style="color:var(--purple)"></i>Reçete Gereksinimleri ({{ emir.hedef_miktar }} {{ emir.hedef_birim }})</div>
+      <div class="card-header"><i class="bi bi-journal-text me-2" style="color:var(--purple)"></i>Reçete Gereksinimleri ({{ emir.hedef_miktar|fmt }} {{ emir.hedef_birim }})</div>
       <div class="card-body p-0">
         <table class="table mb-0">
           <thead><tr><th class="ps-3">Hammadde</th><th>Gereken</th><th>Stokta</th><th>Durum</th></tr></thead>
@@ -94,8 +94,8 @@
             {% set gereken = k.miktar * emir.hedef_miktar %}
             <tr>
               <td class="ps-3" style="font-weight:500">{{ k.hammadde.ad }}{% if k.hammadde.alerjenler %}{% for a in k.hammadde.alerjen_listesi %}<span class="alerjen-tag">{{ a }}</span>{% endfor %}{% endif %}</td>
-              <td style="font-family:'JetBrains Mono',monospace">{{ "%.3f"|format(gereken) }} {{ k.birim }}</td>
-              <td style="font-family:'JetBrains Mono',monospace;color:{% if stok_toplam >= gereken %}var(--green){% else %}var(--red){% endif %}">{{ "%.3f"|format(stok_toplam) }}</td>
+              <td style="font-family:'JetBrains Mono',monospace">{{ gereken|fmt }} {{ k.birim }}</td>
+              <td style="font-family:'JetBrains Mono',monospace;color:{% if stok_toplam >= gereken %}var(--green){% else %}var(--red){% endif %}">{{ stok_toplam|fmt }}</td>
               <td>{% if stok_toplam >= gereken %}<span class="badge-tw b-onaylı">Yeterli</span>{% else %}<span class="badge-tw b-karantina">Yetersiz</span>{% endif %}</td>
             </tr>
             {% endif %}
@@ -226,7 +226,7 @@
             <tr onclick="location.href='/uretim/parti/{{ p.id }}'" style="cursor:pointer">
               <td class="ps-3"><code style="color:var(--green)">{{ p.parti_no }}</code></td>
               <td>{{ p.urun.ad if p.urun else '—' }}</td>
-              <td style="font-family:'JetBrains Mono',monospace">{{ p.uretim_miktari }} {{ p.birim }}</td>
+              <td style="font-family:'JetBrains Mono',monospace">{{ p.uretim_miktari|fmt }} {{ p.birim }}</td>
               <td style="font-size:12px">{{ p.son_kullanma.strftime('%d.%m.%Y') if p.son_kullanma else '—' }}</td>
               <td>
                 {% if p.qr_data %}
@@ -294,7 +294,8 @@
       </div>
       <div class="alert-tw alert-info" style="font-size:12px"><i class="bi bi-info-circle"></i> FIFO kuralıyla en eski onaylı lot önce çekilir.</div>
     </div>
-    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn-tw">Çek</button></div>
+    <div class="modal-footer"><button type="button" class="btn-ghost" data-bs-dismiss="modal">İptal</button><button type="submit" formaction="/uretim/{{ emir.id }}/fifo-oto" class="btn-ghost" style="border-color:var(--green);color:var(--green)"><i class="bi bi-magic me-1"></i> Otomatik</button>
+      <button type="submit" class="btn-tw">Manuel Çek</button></div>
   </form>
 </div></div></div>
 
@@ -350,7 +351,7 @@
         <select name="yari_mamul_id" class="form-select" required>
           <option value="">— Seçiniz —</option>
           {% for ym in yari_mamuller %}
-          <option value="{{ ym.id }}">{{ ym.ad }} — {{ ym.kalan_miktar }} {{ ym.birim }} (SKT: {{ ym.son_kullanma.strftime('%d.%m %H:%M') if ym.son_kullanma else '?' }})</option>
+          <option value="{{ ym.id }}">{{ ym.ad }} — {{ ym.kalan_miktar|fmt }} {{ ym.birim }} (SKT: {{ ym.son_kullanma.strftime('%d.%m %H:%M') if ym.son_kullanma else '?' }})</option>
           {% endfor %}
         </select>
       </div>

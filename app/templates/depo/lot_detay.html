@@ -17,7 +17,7 @@
         {% if fifo_konum %}
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px">
           <span class="fifo-badge {% if fifo_konum==1 %}first{% endif %}" style="width:28px;height:28px;font-size:13px">{{ fifo_konum }}</span>
-          <span style="font-size:12px;color:var(--muted)">FIFO sırası / {{ fifo_toplam }}</span>
+          <span style="font-size:12px;color:var(--muted)">FIFO sırası / {{ fifo_toplam|fmt }}</span>
         </div>
         {% if fifo_konum == 1 %}<div class="alert-tw alert-info" style="margin-top:10px;font-size:12px"><i class="bi bi-arrow-right-circle"></i> Sıradaki — ilk çekilecek lot</div>{% endif %}
         {% endif %}
@@ -53,9 +53,9 @@
           <div class="col-md-4"><div style="font-size:11px;color:var(--muted)">Tedarikçi Lot No</div><code>{{ lot.lot_no }}</code></div>
           <div class="col-md-4"><div style="font-size:11px;color:var(--muted)">Fatura No</div><code>{{ lot.fatura_no or '—' }}</code></div>
           <div class="col-md-4"><div style="font-size:11px;color:var(--muted)">Sertifika No</div><div>{{ lot.sertifika_no or '—' }}</div></div>
-          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Giriş Miktarı</div><div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ lot.giris_miktar }} <span style="font-size:12px;font-weight:400">{{ lot.birim }}</span></div></div>
+          <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Giriş Miktarı</div><div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ lot.giris_miktar|fmt }} <span style="font-size:12px;font-weight:400">{{ lot.birim }}</span></div></div>
           <div class="col-md-3"><div style="font-size:11px;color:var(--muted)">Kalan Miktar</div>
-            <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--green)">{{ lot.kalan_miktar }} <span style="font-size:12px;font-weight:400">{{ lot.birim }}</span></div>
+            <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--green)">{{ lot.kalan_miktar|fmt }} <span style="font-size:12px;font-weight:400">{{ lot.birim }}</span></div>
             {% set pct = ((lot.kalan_miktar/lot.giris_miktar)*100)|int if lot.giris_miktar else 0 %}
             <div class="prog" style="margin-top:4px"><div class="prog-bar {% if pct<20 %}danger{% elif pct<50 %}warn{% endif %}" style="width:{{ pct }}%"></div></div>
           </div>
@@ -106,7 +106,7 @@
             <tr>
               <td class="ps-3"><span class="badge-tw b-{{ h.tip.value }}">{{ h.tip.value }}</span></td>
               <td style="font-family:'JetBrains Mono',monospace;color:{% if h.tip.value=='giris' %}var(--green){% else %}var(--red){% endif %}">
-                {% if h.tip.value=='giris' %}+{% else %}-{% endif %}{{ h.miktar }}
+                {% if h.tip.value=='giris' %}+{% else %}-{% endif %}{{ h.miktar|fmt }}
               </td>
               <td style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace">{{ h.onceki_miktar or '—' }}</td>
               <td style="font-size:12px;font-family:'JetBrains Mono',monospace">{{ h.sonraki_miktar or '—' }}</td>

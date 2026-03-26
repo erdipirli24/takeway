@@ -52,7 +52,7 @@
           <td style="font-weight:500">{{ lot.hammadde.ad }}</td>
           <td><code style="font-size:11px">{{ lot.lot_no }}</code></td>
           <td>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px">{{ lot.kalan_miktar }} / {{ lot.giris_miktar }} {{ lot.birim }}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px">{{ lot.kalan_miktar|fmt }} / {{ lot.giris_miktar|fmt }} {{ lot.birim }}</div>
             {% set pct = ((lot.kalan_miktar / lot.giris_miktar)*100)|int if lot.giris_miktar else 0 %}
             <div class="prog" style="margin-top:3px;width:80px"><div class="prog-bar {% if pct < 20 %}danger{% elif pct < 50 %}warn{% endif %}" style="width:{{ pct }}%"></div></div>
           </td>

@@ -30,7 +30,7 @@
     {% if yari_mamul_fire %}
     <div style="padding:10px 16px;background:rgba(227,179,65,.05);border-bottom:1px solid var(--border)">
       <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:6px">YARI MAMUL FİRE (RAF ÖMRÜ DOLDU)</div>
-      {% for ym in yari_mamul_fire %}<div style="font-size:13px;margin-bottom:4px"><code>{{ ym.parti_no }}</code> — {{ ym.ad }} — {{ ym.uretim_miktari }} {{ ym.birim }}</div>{% endfor %}
+      {% for ym in yari_mamul_fire %}<div style="font-size:13px;margin-bottom:4px"><code>{{ ym.parti_no }}</code> — {{ ym.ad }} — {{ ym.uretim_miktari|fmt }} {{ ym.birim }}</div>{% endfor %}
     </div>
     {% endif %}
     {% if fire_hareketler %}
@@ -38,7 +38,7 @@
       <thead><tr><th class="ps-3">Lot</th><th>Miktar</th><th>Açıklama</th><th>Tarih</th></tr></thead>
       <tbody>
         {% for h in fire_hareketler %}
-        <tr><td class="ps-3"><code>{{ h.lot.ic_parti_no or h.lot.lot_no if h.lot else '—' }}</code></td><td style="color:var(--orange);font-family:'JetBrains Mono',monospace">{{ h.miktar }}</td><td style="font-size:12px;color:var(--muted)">{{ h.aciklama or '—' }}</td><td style="font-size:11px;color:var(--muted)">{{ h.tarih.strftime('%d.%m.%Y') }}</td></tr>
+        <tr><td class="ps-3"><code>{{ h.lot.ic_parti_no or h.lot.lot_no if h.lot else '—' }}</code></td><td style="color:var(--orange);font-family:'JetBrains Mono',monospace">{{ h.miktar|fmt }}</td><td style="font-size:12px;color:var(--muted)">{{ h.aciklama or '—' }}</td><td style="font-size:11px;color:var(--muted)">{{ h.tarih.strftime('%d.%m.%Y') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -33,7 +33,7 @@
 
   <div class="card" style="padding:14px">
     <div style="font-size:16px;font-weight:700;margin-bottom:4px">{{ emir.urun_adi }}</div>
-    <div style="font-size:12px;color:var(--muted)">Hedef: {{ emir.hedef_miktar }} {{ emir.hedef_birim }}</div>
+    <div style="font-size:12px;color:var(--muted)">Hedef: {{ emir.hedef_miktar|fmt }} {{ emir.hedef_birim }}</div>
     {% set tamamlanan = emir.asama_kayitlari|selectattr('tamamlandi','eq',true)|list|length %}
     {% set toplam = emir.asama_kayitlari|length %}
     <div class="progress-wrap"><div class="progress-bar" style="width:{{ (tamamlanan/toplam*100)|int if toplam else 0 }}%"></div></div>

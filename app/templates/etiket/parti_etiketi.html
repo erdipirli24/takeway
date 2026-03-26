@@ -42,7 +42,7 @@
     <div class="firma-logo">{% if firma %}{{ firma.ad }}{% else %}TraceWay{% endif %}</div>
     <div class="urun-adi">{{ parti.urun.ad if parti.urun else '—' }}</div>
     <div class="parti-no">Parti: {{ parti.parti_no }}</div>
-    <div class="satir"><span class="label">Net Miktar:</span><span class="val">{{ parti.uretim_miktari }} {{ parti.birim }}</span></div>
+    <div class="satir"><span class="label">Net Miktar:</span><span class="val">{{ parti.uretim_miktari|fmt }} {{ parti.birim }}</span></div>
     <div class="satir"><span class="label">Üretim Tarihi:</span><span class="val">{{ parti.uretim_tarihi.strftime('%d.%m.%Y') if parti.uretim_tarihi else '—' }}</span></div>
     <div style="margin-top:2mm">
       <div style="font-size:7pt;color:#555">Son Kullanma Tarihi:</div>

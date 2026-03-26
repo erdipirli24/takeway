@@ -14,7 +14,7 @@
         <tr>
           <td class="ps-3" style="font-weight:500">{{ m.tedarikci.ad }}</td>
           <td><code>{{ m.tedarikci.kod or '—' }}</code></td>
-          <td style="font-family:'JetBrains Mono',monospace">{{ m.toplam_lot }}</td>
+          <td style="font-family:'JetBrains Mono',monospace">{{ m.toplam_lot|fmt }}</td>
           <td style="color:{{ 'var(--red)' if m.karantina else 'var(--muted)' }};font-family:'JetBrains Mono',monospace">{{ m.karantina }}</td>
           <td style="color:{{ 'var(--orange)' if m.iade else 'var(--muted)' }};font-family:'JetBrains Mono',monospace">{{ m.iade }}</td>
           <td>

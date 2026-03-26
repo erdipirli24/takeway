@@ -108,7 +108,7 @@
             <tr onclick="location.href='/depo/lot/{{ lot.id }}'" style="cursor:pointer">
               <td class="ps-3"><code style="font-size:11px">{{ lot.ic_parti_no or lot.lot_no or '—' }}</code></td>
               <td>{{ lot.hammadde.ad if lot.hammadde else '—' }}</td>
-              <td>{{ lot.kalan_miktar }} {{ lot.hammadde.birim if lot.hammadde else '' }}</td>
+              <td>{{ lot.kalan_miktar|fmt }} {{ lot.hammadde.birim if lot.hammadde else '' }}</td>
               <td><span class="badge-tw b-{{ lot.durum.value }}">{{ lot.durum.value }}</span></td>
             </tr>
             {% endfor %}

@@ -4,7 +4,7 @@
 {% block breadcrumb %}<a href="/dashboard">Dashboard</a> / <a href="/sikayet/">Şikayetler</a> / {{ sikayet.sikayet_no }}{% endblock %}
 {% block content %}
 {% if sikayet.is_recall and sikayet.durum.value == 'recall' %}
-<div class="alert-tw alert-danger mb-3" style="font-size:14px;font-weight:600"><i class="bi bi-exclamation-octagon-fill" style="font-size:18px"></i> AKTİF RECALL!{% if sikayet.etkilenen_miktar %} Etkilenen: {{ sikayet.etkilenen_miktar }} · Geri çağrılan: {{ sikayet.geri_cagrilan or 0 }}{% endif %}</div>
+<div class="alert-tw alert-danger mb-3" style="font-size:14px;font-weight:600"><i class="bi bi-exclamation-octagon-fill" style="font-size:18px"></i> AKTİF RECALL!{% if sikayet.etkilenen_miktar %} Etkilenen: {{ sikayet.etkilenen_miktar|fmt }} · Geri çağrılan: {{ sikayet.geri_cagrilan or 0 }}{% endif %}</div>
 {% endif %}
 <div class="row g-3">
   <div class="col-lg-4">
@@ -18,7 +18,7 @@
       <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px">
         {% if sikayet.musteri %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Müşteri</span><span>{{ sikayet.musteri.ad }}</span></div>{% endif %}
         {% if sikayet.urun_parti %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Parti</span><a href="/uretim/parti/{{ sikayet.urun_parti_id }}" style="color:var(--green)"><code>{{ sikayet.urun_parti.parti_no }}</code></a></div>{% endif %}
-        {% if sikayet.etkilenen_miktar %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Etkilenen</span><span style="color:var(--red);font-weight:600">{{ sikayet.etkilenen_miktar }}</span></div>{% endif %}
+        {% if sikayet.etkilenen_miktar %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Etkilenen</span><span style="color:var(--red);font-weight:600">{{ sikayet.etkilenen_miktar|fmt }}</span></div>{% endif %}
         {% if sikayet.is_recall %}<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Geri Çağrılan</span><span style="color:var(--green);font-weight:600">{{ sikayet.geri_cagrilan or 0 }}</span></div>{% endif %}
       </div>
       <div class="divider"></div>

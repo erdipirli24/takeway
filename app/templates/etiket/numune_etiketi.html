@@ -30,7 +30,7 @@
     <div class="numune-no">{{ numune.numune_no }}</div>
     <div class="satir"><span class="label">Ürün: </span><span class="val">{{ numune.lot.hammadde.ad if numune.lot else '—' }}</span></div>
     <div class="satir"><span class="label">Lot: </span><span class="val">{{ numune.lot.ic_parti_no or numune.lot.lot_no if numune.lot else '—' }}</span></div>
-    <div class="satir"><span class="label">Miktar: </span><span class="val">{{ numune.miktar }} {{ numune.birim }}</span></div>
+    <div class="satir"><span class="label">Miktar: </span><span class="val">{{ numune.miktar|fmt }} {{ numune.birim }}</span></div>
     <div class="satir"><span class="label">Tarih: </span><span class="val">{{ numune.alinma_tarihi.strftime('%d.%m.%Y %H:%M') }}</span></div>
     <div class="satir"><span class="label">Tip: </span><span class="val">{{ numune.lab_tipi.value }}</span></div>
   </div>

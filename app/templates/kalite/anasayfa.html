@@ -10,7 +10,7 @@
 {% block content %}
 <div class="row g-3 mb-4">
   <div class="col-6 col-lg-3"><div class="kpi"><div class="kpi-label">CCP Noktası</div><div class="kpi-val" style="color:var(--blue)">{{ ccp_tanimlar|length }}</div><div class="kpi-sub">Aktif kontrol noktası</div></div></div>
-  <div class="col-6 col-lg-3"><div class="kpi" {% if sapma_sayisi %}style="border-color:var(--red)"{% endif %}><div class="kpi-label">Sapma</div><div class="kpi-val" style="color:{{ 'var(--red)' if sapma_sayisi else 'var(--muted)' }}">{{ sapma_sayisi }}</div><div class="kpi-sub">Onaylanmayan ölçüm</div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi" {% if sapma_sayisi %}style="border-color:var(--red)"{% endif %}><div class="kpi-label">Sapma</div><div class="kpi-val" style="color:{{ 'var(--red)' if sapma_sayisi else 'var(--muted)' }}">{{ sapma_sayisi|fmt }}</div><div class="kpi-sub">Onaylanmayan ölçüm</div></div></div>
   <div class="col-6 col-lg-3"><div class="kpi"><div class="kpi-label">Bugün Temizlik</div><div class="kpi-val" style="color:var(--green)">{{ bugun_temizlik }}</div><div class="kpi-sub">Tamamlanan kayıt</div></div></div>
 </div>
 
