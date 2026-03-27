@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Üretimi Tamamla · {{ emir.emri_no }}{% endblock %}
+{% block page_title %}Üretimi Tamamla{% endblock %}
+{% block breadcrumb %}
+<a href="/dashboard">Dashboard</a> / <a href="/uretim/">Üretim</a> / 
+<a href="/uretim/{{ emir.id }}">{{ emir.emri_no }}</a> / Tamamla
+{% endblock %}
+{% block content %}
+
+<div class="row g-3 justify-content-center">
+  <div class="col-lg-6">
+
+    <!-- Emri özet -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:16px;font-weight:700">{{ emir.urun_adi }}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">{{ emir.emri_no }} · Hedef: {{ emir.hedef_miktar|fmt }} {{ emir.hedef_birim }}</div>
+          </div>
+          <span class="badge-tw b-devam">Tamamlanıyor</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-box-seam me-2" style="color:var(--green)"></i>Üretim Çıktısını Kaydet
+      </div>
+      <form method="POST" action="/uretim/{{ emir.id }}/tamamla-ve-stokla">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+
+          <!-- Parti No -->
+          <div>
+            <label class="form-label">Parti Numarası</label>
+            <input type="text" name="parti_no" class="form-control"
+                   value="{{ next_parti_no }}"
+                   style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--green)">
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">
+              Otomatik atandı — değiştirebilirsiniz
+            </div>
+          </div>
+
+          <!-- Ara mı Ana mı -->
+          <div>
+            <label class="form-label">Üretim Türü</label>
+            <div style="display:flex;gap:8px">
+              <label style="flex:1;cursor:pointer;border:2px solid var(--border);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px" id="lblAra">
+                <input type="radio" name="urun_tipi" value="ara" style="accent-color:var(--orange)">
+                <div>
+                  <div style="font-weight:600">🧩 Ara Ürün</div>
+                  <div style="font-size:11px;color:var(--muted)">Hamur, karışım, baharat</div>
+                </div>
+              </label>
+              <label style="flex:1;cursor:pointer;border:2px solid var(--green);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px" id="lblAna">
+                <input type="radio" name="urun_tipi" value="ana" checked style="accent-color:var(--green)">
+                <div>
+                  <div style="font-weight:600">🎯 Ana Ürün</div>
+                  <div style="font-size:11px;color:var(--muted)">Mantı, gözleme, son ürün</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Miktar -->
+          <div class="row g-2">
+            <div class="col-8">
+              <label class="form-label">Üretilen Miktar *</label>
+              <input type="number" name="miktar" class="form-control" step="0.001" min="0.001"
+                     required value="{{ emir.hedef_miktar|fmt }}"
+                     style="font-size:15px;font-weight:600">
+            </div>
+            <div class="col-4">
+              <label class="form-label">Birim</label>
+              <select name="birim" class="form-select">
+                <option value="kg" {% if emir.hedef_birim=='kg' %}selected{% endif %}>kg</option>
+                <option value="adet" {% if emir.hedef_birim=='adet' %}selected{% endif %}>adet</option>
+                <option value="paket" {% if emir.hedef_birim=='paket' %}selected{% endif %}>paket</option>
+                <option value="g" {% if emir.hedef_birim=='g' %}selected{% endif %}>g</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Son Kullanma (Ana ürün) -->
+          <div id="sktDiv">
+            <label class="form-label">Son Kullanma Tarihi</label>
+            <input type="date" name="son_kullanma" class="form-control">
+          </div>
+
+          <!-- Raf Ömrü (Ara ürün) -->
+          <div id="rafDiv" style="display:none">
+            <label class="form-label">Raf Ömrü (gün)</label>
+            <input type="number" name="raf_omru_gun" class="form-control" value="2" min="1">
+          </div>
+
+          <!-- Depo -->
+          <div>
+            <label class="form-label">Hangi Depoya Koyacaksınız? *</label>
+            <select name="depo_id" class="form-select" required>
+              <option value="">— Depo seçin —</option>
+              {% for d in depolar %}
+              <option value="{{ d.id }}">{{ d.ad }}
+                {% if d.tip == 'yari_mamul' %} 🧩{% elif d.tip == 'mamul' %} 📦{% elif d.tip == 'hammadde' %} 🧱{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <input type="hidden" name="urun_id" value="{{ emir.urun_id or '' }}">
+          <input type="hidden" name="urun_adi" value="{{ emir.urun_adi or (emir.recete.ad if emir.recete else '') }}">
+
+        </div>
+        <div style="padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
+          <a href="/uretim/{{ emir.id }}" class="btn-ghost">İptal</a>
+          <button type="submit" class="btn-tw" style="font-size:14px;padding:9px 24px">
+            <i class="bi bi-check-circle me-2"></i>Stoğa Al & Tamamla
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    document.getElementById('lblAra').style.borderColor = 'var(--border)';
+    document.getElementById('lblAna').style.borderColor = 'var(--border)';
+    document.getElementById(this.value === 'ara' ? 'lblAra' : 'lblAna').style.borderColor =
+      this.value === 'ara' ? 'var(--orange)' : 'var(--green)';
+    document.getElementById('rafDiv').style.display = this.value === 'ara' ? '' : 'none';
+    document.getElementById('sktDiv').style.display = this.value === 'ana' ? '' : 'none';
+    // Parti no güncelle
+    document.querySelector('[name=parti_no]').value =
+      this.value === 'ara' ? "{{ next_yari_no }}" : "{{ next_parti_no }}";
+  });
+});
+document.getElementById('lblAna').style.borderColor = 'var(--green)';
+</script>
+{% endblock %}

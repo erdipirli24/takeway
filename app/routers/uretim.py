@@ -636,6 +636,37 @@ def yari_mamul_listesi(
     })
 
 
+
+@router.get("/{eid}/tamamla-form", response_class=HTMLResponse)
+def tamamla_form(
+    eid: int,
+    request: Request,
+    user: Kullanici = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Üretimi tamamla sayfası — ayrı sayfa, modal sorunu yok."""
+    emir = db.query(UretimEmri).filter(
+        UretimEmri.id == eid, UretimEmri.firma_id == user.firma_id
+    ).first()
+    if not emir:
+        return RedirectResponse("/uretim/", status_code=302)
+
+    depolar = db.query(Depo).filter(Depo.firma_id == user.firma_id, Depo.aktif == True).all()
+
+    from datetime import datetime as _dt
+    _pno_sira = db.query(UrunParti).filter(UrunParti.firma_id == user.firma_id).count() + 1
+    next_parti_no = f"UP-{user.firma_id:02d}-{_dt.now().strftime('%y%m%d')}-{_pno_sira:04d}"
+    _ym_sira = db.query(YariMamul).filter(YariMamul.firma_id == user.firma_id).count() + 1
+    next_yari_no = f"YM-{user.firma_id:02d}-{_dt.now().strftime('%y%m%d')}-{_ym_sira:04d}"
+
+    return templates.TemplateResponse("uretim/tamamla.html", {
+        "request": request, "user": user,
+        "emir": emir,
+        "depolar": depolar,
+        "next_parti_no": next_parti_no,
+        "next_yari_no": next_yari_no,
+    })
+
 # ═══ ÜRETİMİ TAMAMLA & STOĞA AL ═════════════════════════
 
 @router.post("/{eid}/tamamla-ve-stokla")
