@@ -50,7 +50,7 @@
         </div>
         {% else %}
         <button type="button" class="btn-tw w-100" style="padding:10px;font-size:13px;justify-content:center"
-                onclick="acModalTamamla()">
+                data-bs-toggle="modal" data-bs-target="#modalTamamla">
           <i class="bi bi-check-circle me-2"></i>Parti No Ver & Tamamla
         </button>
         {% endif %}
@@ -394,7 +394,6 @@
 <script>
 function showQR(no,b64){document.getElementById('qrTitle').textContent=no;document.getElementById('qrImg').src='data:image/png;base64,'+b64;new bootstrap.Modal(document.getElementById('modalQR')).show();}
 </script>
-{% endblock %}
 
 <!-- TAMAMLA MODAL -->
 <div class="modal fade" id="modalTamamla" tabindex="-1">
@@ -412,10 +411,10 @@ function showQR(no,b64){document.getElementById('qrTitle').textContent=no;docume
           <!-- Parti No -->
           <div>
             <label class="form-label">Parti Numarası</label>
-            <input type="text" name="parti_no" class="form-control"
-                   placeholder="Otomatik oluşturulur"
-                   style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600">
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Boş bırakırsanız sistem otomatik atar</div>
+            <input type="text" name="parti_no" class="form-control" id="partiNoInput"
+                   value="{{ next_parti_no }}"
+                   style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--green)">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Değiştirebilirsiniz veya olduğu gibi bırakın</div>
           </div>
 
           <!-- Ara mı Ana mı -->
@@ -495,14 +494,12 @@ function showQR(no,b64){document.getElementById('qrTitle').textContent=no;docume
   </div>
 </div>
 
+{% endblock %}
 {% block scripts %}
 <script>
-function acModalTamamla() {
-  var el = document.getElementById('modalTamamla');
-  if (!el) { alert('Modal bulunamadı'); return; }
-  var m = bootstrap.Modal.getOrCreateInstance(el);
-  m.show();
-}
+// Parti no önizleme
+var nextAnaNo = "{{ next_parti_no }}";
+var nextYariNo = "{{ next_yari_no }}";
 
 // Tip seçimi
 document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
@@ -513,6 +510,9 @@ document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
       this.value === 'ara' ? 'var(--orange)' : 'var(--green)';
     document.getElementById('rafDiv').style.display = this.value === 'ara' ? '' : 'none';
     document.getElementById('sktDiv').style.display = this.value === 'ana' ? '' : 'none';
+    // Parti no güncelle
+    var pInput = document.getElementById('partiNoInput');
+    if (pInput) pInput.value = this.value === 'ara' ? nextYariNo : nextAnaNo;
   });
 });
 // Default: ana

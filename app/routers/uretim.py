@@ -214,6 +214,13 @@ def emir_detay(
         Recete.aktif == True
     ).order_by(Recete.ad).all()
 
+    # Sonraki parti no önizleme
+    from datetime import datetime as _dt
+    _pno_sira = db.query(UrunParti).filter(UrunParti.firma_id == user.firma_id).count() + 1
+    next_parti_no = f"UP-{user.firma_id:02d}-{_dt.now().strftime('%y%m%d')}-{_pno_sira:04d}"
+    _ym_sira = db.query(YariMamul).filter(YariMamul.firma_id == user.firma_id).count() + 1
+    next_yari_no = f"YM-{user.firma_id:02d}-{_dt.now().strftime('%y%m%d')}-{_ym_sira:04d}"
+
     return templates.TemplateResponse("uretim/detay.html", {
         "request": request, "user": user,
         "emir": emir,
@@ -228,6 +235,8 @@ def emir_detay(
         "receteler": receteler_karisim,
         "UretimDurum": UretimDurum,
         "MacineDurum": MacineDurum,
+        "next_parti_no": next_parti_no,
+        "next_yari_no": next_yari_no,
         "hata": hata,
         "now": _now(),
     })
@@ -639,13 +648,14 @@ def tamamla_ve_stokla(
     birim: str = Form("kg"),
     raf_omru_gun: str = Form(""),
     son_kullanma: str = Form(""),
-    depo_id: int = Form(...),
+    depo_id: str = Form(""),
     parti_no: str = Form(""),
     user: Kullanici = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     fid = user.firma_id
     _urun_id = safe_int(urun_id)
+    _depo_id = safe_int(depo_id)
 
     def parse_dt(s):
         if s and s.strip():
@@ -682,13 +692,15 @@ def tamamla_ve_stokla(
             birim          = birim,
             raf_omru_gun   = raf_gun,
             son_kullanma   = son_kullanma_dt,
-            depo_id        = depo_id,
+            depo_id        = _depo_id,
             qr_data        = qr,
             created_by     = user.id,
         ))
     else:
         # Ana ürün → UrunParti tablosuna
-        pno = parti_no.strip() or _parti_no(db, fid, _urun_id or 0)
+        _pno_base = f"UP-{fid:02d}-{datetime.now().strftime('%y%m%d')}"
+        _pno_sira = db.query(UrunParti).filter(UrunParti.firma_id == fid).count() + 1
+        pno = parti_no.strip() or f"{_pno_base}-{_pno_sira:04d}"
         qr  = qr_olustur(
             f"TW-PARTİ\nParti No: {pno}\nÜretim Emri: {emir.emri_no}\n"
             f"Miktar: {miktar} {birim}"
@@ -703,7 +715,7 @@ def tamamla_ve_stokla(
             birim          = birim,
             uretim_tarihi  = _now(),
             son_kullanma   = parse_dt(son_kullanma),
-            depo_id        = depo_id,
+            depo_id        = _depo_id,
             qr_data        = qr,
         ))
         emir.uretilen_miktar = float(emir.uretilen_miktar or 0) + miktar
