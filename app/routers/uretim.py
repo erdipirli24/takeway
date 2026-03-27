@@ -659,10 +659,13 @@ def tamamla_form(
     _ym_sira = db.query(YariMamul).filter(YariMamul.firma_id == user.firma_id).count() + 1
     next_yari_no = f"YM-{user.firma_id:02d}-{_dt.now().strftime('%y%m%d')}-{_ym_sira:04d}"
 
+    urunler = db.query(Urun).filter(Urun.firma_id == user.firma_id, Urun.aktif == True).all()
+
     return templates.TemplateResponse("uretim/tamamla.html", {
         "request": request, "user": user,
         "emir": emir,
         "depolar": depolar,
+        "urunler": urunler,
         "next_parti_no": next_parti_no,
         "next_yari_no": next_yari_no,
     })
@@ -736,9 +739,16 @@ def tamamla_ve_stokla(
             f"TW-PARTİ\nParti No: {pno}\nÜretim Emri: {emir.emri_no}\n"
             f"Miktar: {miktar} {birim}"
         )
+        # urun_id zorunlu — emr'den al, o da yoksa ilk ürünü kullan
+        _final_urun_id = _urun_id or emir.urun_id
+        if not _final_urun_id:
+            from app.models.models import Urun as _Urun
+            _ilk_urun = db.query(_Urun).filter(_Urun.firma_id == fid).first()
+            _final_urun_id = _ilk_urun.id if _ilk_urun else None
+
         db.add(UrunParti(
             firma_id       = fid,
-            urun_id        = _urun_id,
+            urun_id        = _final_urun_id,
             uretim_emri_id = eid,
             parti_no       = pno,
             uretim_miktari = miktar,

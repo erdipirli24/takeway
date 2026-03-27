@@ -752,7 +752,7 @@ class UrunParti(Base):
 
     id              = Column(Integer, primary_key=True)
     firma_id        = Column(Integer, ForeignKey("firmalar.id"), nullable=False)
-    urun_id         = Column(Integer, ForeignKey("urunler.id"), nullable=False)
+    urun_id         = Column(Integer, ForeignKey("urunler.id"), nullable=True)
     uretim_emri_id  = Column(Integer, ForeignKey("uretim_emirleri.id"), nullable=False)
 
     parti_no        = Column(String(80), nullable=False, unique=True)

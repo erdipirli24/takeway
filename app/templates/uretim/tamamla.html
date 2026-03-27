@@ -42,6 +42,17 @@
             </div>
           </div>
 
+          <!-- Ürün -->
+          <div id="urunDiv">
+            <label class="form-label">Ürün <small style="color:var(--muted)">(ana ürün için)</small></label>
+            <select name="urun_id" class="form-select" id="urunSel">
+              <option value="">— Ürün seçin —</option>
+              {% for u in urunler %}
+              <option value="{{ u.id }}" {% if emir.urun_id == u.id %}selected{% endif %}>{{ u.ad }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
           <!-- Ara mı Ana mı -->
           <div>
             <label class="form-label">Üretim Türü</label>
@@ -126,17 +137,20 @@
 <script>
 document.querySelectorAll('input[name=urun_tipi]').forEach(function(r) {
   r.addEventListener('change', function() {
-    document.getElementById('lblAra').style.borderColor = 'var(--border)';
-    document.getElementById('lblAna').style.borderColor = 'var(--border)';
-    document.getElementById(this.value === 'ara' ? 'lblAra' : 'lblAna').style.borderColor =
-      this.value === 'ara' ? 'var(--orange)' : 'var(--green)';
-    document.getElementById('rafDiv').style.display = this.value === 'ara' ? '' : 'none';
-    document.getElementById('sktDiv').style.display = this.value === 'ana' ? '' : 'none';
-    // Parti no güncelle
+    var ara = this.value === 'ara';
+    document.getElementById('lblAra').style.borderColor = ara ? 'var(--orange)' : 'var(--border)';
+    document.getElementById('lblAna').style.borderColor = ara ? 'var(--border)' : 'var(--green)';
+    document.getElementById('rafDiv').style.display = ara ? '' : 'none';
+    document.getElementById('sktDiv').style.display = ara ? 'none' : '';
+    document.getElementById('urunDiv').style.display = ara ? 'none' : '';
     document.querySelector('[name=parti_no]').value =
-      this.value === 'ara' ? "{{ next_yari_no }}" : "{{ next_parti_no }}";
+      ara ? "{{ next_yari_no }}" : "{{ next_parti_no }}";
+    if (document.getElementById('urunSel')) {
+      document.getElementById('urunSel').required = !ara;
+    }
   });
 });
 document.getElementById('lblAna').style.borderColor = 'var(--green)';
+if (document.getElementById('urunSel')) document.getElementById('urunSel').required = true;
 </script>
 {% endblock %}
